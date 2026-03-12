@@ -263,6 +263,53 @@
       padding-top: 20px;
       border-top: 1px solid var(--border);
     }
+    .preview-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .preview-modal-inner {
+      background: var(--surface);
+      border-radius: 12px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+    }
+    .preview-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .preview-modal-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--primary);
+    }
+    .preview-modal-body {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .preview-modal-body iframe {
+      width: 100%;
+      height: 70vh;
+      border: none;
+      display: block;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -316,12 +363,10 @@
 
       <div class="email-section">
         <h3 style="margin:0 0 12px 0; font-size:0.9375rem; font-weight:600;">Send Report by Email</h3>
-        <div class="form-group">
-          <label for="emailRecipient">Recipient email (optional)</label>
-          <input type="email" id="emailRecipient" placeholder="e.g. team@company.com">
-          <p class="hint">Leave blank to send to the Product & Growth team (default)</p>
+        <div class="actions">
+          <button class="btn-secondary" id="btnPreview" onclick="previewEmail()">Preview Email</button>
+          <button class="btn-success" id="btnSend" onclick="sendEmail()">Send Email</button>
         </div>
-        <button class="btn-success" id="btnSend" onclick="sendEmail()">Send Email</button>
       </div>
     </div>
 
@@ -330,6 +375,18 @@
       <div class="report" id="reportContent"></div>
     </div>
   </main>
+
+  <div class="preview-modal" id="previewModal" onclick="if(event.target===this)closePreviewModal()">
+    <div class="preview-modal-inner">
+      <div class="preview-modal-header">
+        <h3 id="previewSubject">Email Preview</h3>
+        <button type="button" class="btn-secondary" onclick="closePreviewModal()">Close</button>
+      </div>
+      <div class="preview-modal-body">
+        <iframe id="previewFrame" title="Email preview"></iframe>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API = '';
@@ -382,6 +439,7 @@
     function setLoading(loading) {
       document.getElementById('btnRun').disabled = loading;
       document.getElementById('btnView').disabled = loading;
+      document.getElementById('btnPreview').disabled = loading;
       document.getElementById('btnSend').disabled = loading;
       document.body.classList.toggle('loading', loading);
     }
@@ -480,16 +538,38 @@
       }
     }
 
+    function closePreviewModal() {
+      document.getElementById('previewModal').style.display = 'none';
+    }
+    async function previewEmail() {
+      setLoading(true);
+      hideMessage();
+      try {
+        const r = await fetch(API + '/api/email/preview');
+        if (!r.ok) {
+          showMessage('No report yet. Run the pipeline first.', 'info');
+          setLoading(false);
+          return;
+        }
+        const d = await r.json();
+        const iframe = document.getElementById('previewFrame');
+        iframe.srcdoc = d.html;
+        document.getElementById('previewSubject').textContent = d.subject || 'Email Preview';
+        document.getElementById('previewModal').style.display = 'flex';
+      } catch (e) {
+        showMessage(e.message || 'Failed to load preview', 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
     async function sendEmail() {
       setLoading(true);
       hideMessage();
-      const recipientInput = document.getElementById('emailRecipient');
-      const recipient = recipientInput.value.trim() || null;
       try {
         const r = await fetch(API + '/api/email/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipient: recipient })
+          body: JSON.stringify({ recipient: null })
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.detail || 'Send failed');

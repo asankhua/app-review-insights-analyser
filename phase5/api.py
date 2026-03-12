@@ -29,6 +29,7 @@ from phase5.pipeline import (
     run_pipeline,
     get_status,
     get_latest_report,
+    get_email_preview,
     send_email as pipeline_send_email,
 )
 
@@ -105,9 +106,18 @@ async def api_report():
     return {"content": content}
 
 
+@app.get("/api/email/preview")
+async def api_email_preview():
+    """Get email preview (HTML) as it would appear in inbox."""
+    preview = get_email_preview()
+    if preview is None:
+        raise HTTPException(status_code=404, detail="No report found. Run pipeline first.")
+    return preview
+
+
 @app.post("/api/email/send")
 async def api_send_email(req: SendEmailRequest):
-    """Send latest report via email."""
+    """Send latest report via email (uses default recipient from env)."""
     result = pipeline_send_email(recipient=req.recipient)
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error", "Send failed"))

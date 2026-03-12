@@ -3,6 +3,7 @@ Phase 5: Pipeline orchestration.
 Runs Phases 1-4 in sequence. Used by CLI and Web API.
 """
 import os
+from datetime import datetime
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 
@@ -179,6 +180,36 @@ def get_latest_report() -> Optional[str]:
     if path and Path(path).exists():
         return Path(path).read_text(encoding="utf-8")
     return None
+
+
+def get_email_preview() -> Optional[dict]:
+    """Get the email HTML and subject that would be sent (for preview)."""
+    content = get_latest_report()
+    if not content:
+        return None
+    try:
+        from phase4.config.email_templates import HTML_TEMPLATE, format_markdown_to_html
+
+        week_date = "Unknown"
+        for line in content.split("\n"):
+            if " -- " in line:
+                week_date = line.split(" -- ")[-1].strip()
+                break
+            if "Week of" in line:
+                week_date = line.split("Week of")[-1].strip()
+                break
+
+        weekly_note_html = format_markdown_to_html(content)
+        html_body = HTML_TEMPLATE.format(
+            recipient_name="Team",
+            week_date=week_date,
+            weekly_note_html=weekly_note_html,
+            generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        subject = f"INDMoney Weekly Review Pulse -- {week_date}"
+        return {"subject": subject, "html": html_body}
+    except Exception:
+        return None
 
 
 def _get_latest_report_path() -> Optional[str]:
