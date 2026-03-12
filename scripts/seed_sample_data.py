@@ -7,6 +7,9 @@ import json
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 REVIEWS_DIR = PROJECT_ROOT / "data" / "reviews"
@@ -53,7 +56,7 @@ def seed_reviews():
         reviews.append(review)
     
     data = {
-        "scrapedAt": datetime.now().isoformat(),
+        "scrapedAt": datetime.now(IST).isoformat(),
         "packageId": "in.indwealth",
         "appId": "indmoney",
         "weeksRequested": 8,
@@ -73,7 +76,7 @@ def seed_themes():
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     
     data = {
-        "generatedAt": datetime.now().isoformat(),
+        "generatedAt": datetime.now(IST).isoformat(),
         "appId": "indmoney",
         "packageId": "in.indwealth",
         "themes": SAMPLE_THEMES,
@@ -120,7 +123,7 @@ def seed_grouped_reviews():
     by_theme["unclassified"] = unclassified if unclassified else []
     
     data = {
-        "generatedAt": datetime.now().isoformat(),
+        "generatedAt": datetime.now(IST).isoformat(),
         "appId": "indmoney",
         "packageId": "in.indwealth",
         "themes": SAMPLE_THEMES,

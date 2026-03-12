@@ -346,7 +346,7 @@
           <span class="value" id="lastRun">—</span>
         </div>
         <div class="status-item">
-          <label>Last Synced Pipeline</label>
+          <label>Synced Pipeline</label>
           <span class="value" id="lastFetched">—</span>
         </div>
         <div class="status-item">
@@ -440,8 +440,10 @@
     const IST_OPTS = { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' };
     function formatIST(iso) {
       try {
-        const s = (iso || '').toString().replace(' ', 'T');
+        let s = (iso || '').toString().replace(' ', 'T').trim();
         if (!s) return '—';
+        // Treat naive timestamps (no Z or offset) as UTC for consistent IST display
+        if (!/Z|[+-]\d{2}:?\d{2}$/.test(s)) s = s.replace(/(\.\d+)?$/, '$1Z');
         const d = new Date(s);
         if (isNaN(d.getTime())) return iso;
         return d.toLocaleString(undefined, IST_OPTS);

@@ -1,8 +1,11 @@
 """
 Email service: SMTP (local) or Resend API (Render free tier).
 Resend uses HTTPS, so it works where SMTP ports are blocked.
+Timestamps stored in IST for consistent UI display.
 """
-import smtplib
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
 import ssl
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -80,7 +83,7 @@ class EmailService:
             return {
                 'status': EmailStatus.SENT,
                 'message_id': result.get('id', f"resend_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(IST).isoformat(),
                 'processing_time': 0.5,
                 'recipient': email_message.to_email,
                 'subject': email_message.subject,
@@ -146,7 +149,7 @@ class EmailService:
             return {
                 'status': EmailStatus.SENT,
                 'message_id': f"email_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(IST).isoformat(),
                 'processing_time': processing_time,
                 'recipient': email_message.to_email,
                 'subject': email_message.subject

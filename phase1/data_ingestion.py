@@ -5,7 +5,10 @@ import json
 import os
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import List, Dict, Optional
+
+IST = ZoneInfo("Asia/Kolkata")
 from pathlib import Path
 
 from .models.review import ReviewsFile
@@ -63,7 +66,7 @@ class DataIngestionService:
             
             # Create reviews file structure
             reviews_file = ReviewsFile(
-                scrapedAt=datetime.now(),
+                scrapedAt=datetime.now(IST),
                 packageId=app_config.package_id,
                 appId="indmoney",
                 weeksRequested=weeks,
