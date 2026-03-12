@@ -240,14 +240,18 @@ def get_email_preview() -> Optional[dict]:
 
 
 def _get_latest_report_path() -> Optional[str]:
-    """Get path to latest pulse markdown."""
+    """Get path to latest pulse markdown. Falls back to sample_data when no report exists."""
     reports_dir = PROJECT_ROOT / "data" / "reports"
-    if not reports_dir.exists():
-        return None
-    pulse_files = list(reports_dir.glob("pulse-*.md"))
-    if not pulse_files:
-        return None
-    return str(sorted(pulse_files)[-1])
+    if reports_dir.exists():
+        pulse_files = list(reports_dir.glob("pulse-*.md"))
+        if pulse_files:
+            return str(sorted(pulse_files)[-1])
+    sample_dir = PROJECT_ROOT / "sample_data"
+    if sample_dir.exists():
+        sample_files = list(sample_dir.glob("pulse-*.md"))
+        if sample_files:
+            return str(sorted(sample_files)[-1])
+    return None
 
 
 def send_email(recipient: Optional[str] = None) -> dict:
