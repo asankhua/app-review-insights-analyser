@@ -363,10 +363,12 @@
 
       <div class="email-section">
         <h3 style="margin:0 0 12px 0; font-size:0.9375rem; font-weight:600;">Send Report by Email</h3>
+        <p class="hint" id="emailRecipientHint" style="margin:0 0 12px 0;">Sends to: —</p>
         <div class="actions">
           <button class="btn-secondary" id="btnPreview" onclick="previewEmail()">Preview Email</button>
           <button class="btn-success" id="btnSend" onclick="sendEmail()">Send Email</button>
         </div>
+        <p class="hint" style="margin-top:8px; font-size:0.75rem;">Resend test sender requires recipient = your Resend account email. Set EMAIL_RECIPIENT on Render.</p>
       </div>
     </div>
 
@@ -456,6 +458,8 @@
         document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
         const lastEmail = s.last_email_sent || '';
         document.getElementById('lastEmailSent').textContent = lastEmail ? formatLastFetched(lastEmail) : 'Never';
+        const hint = document.getElementById('emailRecipientHint');
+        if (hint) hint.textContent = 'Sends to: ' + (s.email_recipient || '(not set)');
         if (s.pipeline_error) {
           showMessage(s.pipeline_error, 'error');
           if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -576,7 +580,11 @@
         showMessage('Email sent to ' + (d.recipient || 'default recipient'), 'success');
         fetchStatus();
       } catch (e) {
-        showMessage(e.message || 'Email send failed', 'error');
+        let msg = e.message || 'Email send failed';
+        if (msg.includes('your own email') || msg.includes('verify a domain')) {
+          msg += ' — Ensure EMAIL_RECIPIENT on Render = your Resend account email (e.g. ashishsankhuapg@gmail.com). Redeploy after changing env.';
+        }
+        showMessage(msg, 'error');
       } finally {
         setLoading(false);
       }
