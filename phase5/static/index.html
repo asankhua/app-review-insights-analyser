@@ -415,6 +415,11 @@
     async function runPipeline() {
       setLoading(true);
       hideMessage();
+      if (!API) {
+        showMessage('API URL not configured. Set API_URL in build.', 'error');
+        setLoading(false);
+        return;
+      }
       try {
         const mock = document.getElementById('useMock').checked;
         const r = await fetch(API + '/api/run', {
@@ -422,7 +427,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mock: mock, weeks: 8, count: 100 })
         });
-        const d = await r.json();
+        let d;
+        try { d = await r.json(); } catch (_) { throw new Error('Invalid response from server'); }
         if (!r.ok) {
           const msg = Array.isArray(d.detail) ? d.detail.map(x => x.msg || x).join('; ') : (d.detail || 'Pipeline failed');
           throw new Error(msg);
@@ -443,7 +449,12 @@
           setLoading(false);
         }
       } catch (e) {
-        showMessage(e.message || 'Pipeline failed', 'error');
+        const msg = e.message || 'Pipeline failed';
+        let hint = '';
+        if (msg === 'Failed to fetch' || msg.includes('fetch')) {
+          hint = ' (Check: backend URL, CORS, or Render cold start — try again in 30s)';
+        }
+        showMessage(msg + hint, 'error');
         setLoading(false);
       }
     }
