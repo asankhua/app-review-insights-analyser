@@ -461,7 +461,8 @@
         const lastEmail = s.last_email_sent || '';
         document.getElementById('lastEmailSent').textContent = lastEmail ? formatLastFetched(lastEmail) : 'Never';
         if (s.pipeline_error && pollTimer) {
-          showMessage(String(s.pipeline_error), 'error');
+          const err = String(s.pipeline_error);
+          if (err && err !== '1') showMessage(err, 'error');
           clearInterval(pollTimer);
           pollTimer = null;
           setLoading(false);

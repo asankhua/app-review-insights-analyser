@@ -118,9 +118,11 @@ async def api_email_preview():
 @app.post("/api/email/send")
 async def api_send_email(req: SendEmailRequest):
     """Send latest report via email (uses default recipient from env)."""
+    from phase5.pipeline import _pipeline_state
     result = pipeline_send_email(recipient=req.recipient)
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error", "Send failed"))
+    _pipeline_state["error"] = None  # Clear stale pipeline error so UI doesn't show it
     return result
 
 
