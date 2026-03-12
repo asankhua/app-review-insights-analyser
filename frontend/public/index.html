@@ -129,6 +129,8 @@
       font-size: 1.25rem;
       font-weight: 600;
       color: var(--primary);
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .form-group {
@@ -339,7 +341,7 @@
           <span class="value" id="themes">—</span>
         </div>
         <div class="status-item">
-          <label>Last Synced (Reviews)</label>
+          <label>Last Synced</label>
           <span class="value" id="lastFetched">—</span>
         </div>
         <div class="status-item">
@@ -363,12 +365,11 @@
 
       <div class="email-section">
         <h3 style="margin:0 0 12px 0; font-size:0.9375rem; font-weight:600;">Send Report by Email</h3>
-        <p class="hint" id="emailRecipientHint" style="margin:0 0 12px 0;">Sends to: —</p>
+        <p class="hint" style="margin:0 0 12px 0;">Sends to: Product Growth Team</p>
         <div class="actions">
           <button class="btn-secondary" id="btnPreview" onclick="previewEmail()">Preview Email</button>
           <button class="btn-success" id="btnSend" onclick="sendEmail()">Send Email</button>
         </div>
-        <p class="hint" style="margin-top:8px; font-size:0.75rem;">Resend test sender requires recipient = your Resend account email. Set EMAIL_RECIPIENT on Render.</p>
       </div>
     </div>
 
@@ -435,7 +436,7 @@
       try {
         const d = new Date(iso.replace(' ', 'T'));
         if (isNaN(d.getTime())) return iso;
-        return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       } catch (_) { return iso; }
     }
     function setLoading(loading) {
@@ -458,8 +459,6 @@
         document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
         const lastEmail = s.last_email_sent || '';
         document.getElementById('lastEmailSent').textContent = lastEmail ? formatLastFetched(lastEmail) : 'Never';
-        const hint = document.getElementById('emailRecipientHint');
-        if (hint) hint.textContent = 'Sends to: ' + (s.email_recipient || '(not set)');
         if (s.pipeline_error) {
           showMessage(s.pipeline_error, 'error');
           if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -575,16 +574,13 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipient: null })
         });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || 'Send failed');
-        showMessage('Email sent to ' + (d.recipient || 'default recipient'), 'success');
+        let d;
+        try { d = await r.json(); } catch (_) { d = {}; }
+        if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : (d.detail?.message || 'Send failed'));
+        showMessage('Email sent successfully to Product Growth Team', 'success');
         fetchStatus();
       } catch (e) {
-        let msg = e.message || 'Email send failed';
-        if (msg.includes('your own email') || msg.includes('verify a domain')) {
-          msg += ' — Ensure EMAIL_RECIPIENT on Render = your Resend account email (e.g. ashishsankhuapg@gmail.com). Redeploy after changing env.';
-        }
-        showMessage(msg, 'error');
+        showMessage(e.message || 'Email send failed', 'error');
       } finally {
         setLoading(false);
       }

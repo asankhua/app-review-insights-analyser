@@ -111,13 +111,7 @@ def _run_subprocess(mock: bool, weeks: int, count: int, send_email: bool) -> Pip
 
 def get_status() -> dict:
     """Get current pipeline status (reviews, themes, report)."""
-    status = _get_status()
-    try:
-        from src.config.settings import Config
-        status["email_recipient"] = Config.EMAIL_RECIPIENT or "(not set)"
-    except Exception:
-        status["email_recipient"] = "(unknown)"
-    return status
+    return _get_status()
 
 
 def _get_last_email_sent() -> Optional[str]:
