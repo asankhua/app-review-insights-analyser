@@ -4,6 +4,9 @@ Runs Phases 1-4 in sequence. Used by CLI and Web API.
 """
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 
@@ -61,6 +64,7 @@ def _run_in_process(mock: bool, weeks: int, count: int, send_email: bool) -> Pip
         if not ok:
             _pipeline_state["error"] = err or "Unknown error"
             return PipelineResult(success=False, message="Pipeline failed", error=err or "Unknown error")
+        _write_last_run()
         return PipelineResult(
             success=True,
             message="Pipeline completed successfully",
@@ -114,6 +118,28 @@ def get_status() -> dict:
     return _get_status()
 
 
+def _write_last_run() -> None:
+    """Write last pipeline/scheduler run timestamp (IST) to logs."""
+    try:
+        logs_dir = PROJECT_ROOT / "data" / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(IST).isoformat()
+        (logs_dir / "last_run.txt").write_text(ts, encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _get_last_run() -> Optional[str]:
+    """Get last pipeline/scheduler run timestamp from logs."""
+    try:
+        path = PROJECT_ROOT / "data" / "logs" / "last_run.txt"
+        if path.exists():
+            return path.read_text(encoding="utf-8").strip()
+        return None
+    except Exception:
+        return None
+
+
 def _get_last_email_sent() -> Optional[str]:
     """Get most recent email sent timestamp from delivery records."""
     try:
@@ -146,6 +172,7 @@ def _get_status() -> dict:
         "last_report_date": None,
         "last_scraped": None,
         "last_email_sent": _get_last_email_sent(),
+        "last_run": _get_last_run(),
         "pipeline_running": _pipeline_state["running"],
         "pipeline_error": _pipeline_state["error"],
     }

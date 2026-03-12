@@ -16,6 +16,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from types import SimpleNamespace
 from typing import Optional
 
@@ -299,6 +300,17 @@ def _mock_data_exists():
     has_grouped = reports_dir.exists() and list(reports_dir.glob("grouped_reviews-*.json"))
     return has_reviews, has_themes, has_grouped
 
+def _write_last_run():
+    """Write last pipeline run timestamp (IST) to logs for UI status."""
+    try:
+        logs_dir = Path("data/logs")
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(ZoneInfo("Asia/Kolkata")).isoformat()
+        (logs_dir / "last_run.txt").write_text(ts, encoding="utf-8")
+    except Exception:
+        pass
+
+
 def run_full_pipeline(args):
     """Run all phases in sequence (Phase 1 -> 2a -> 2b -> 3 -> 4)"""
     try:
@@ -381,6 +393,9 @@ def run_full_pipeline(args):
         print("PHASE 4: Email" + (" (send)" if args.send else " (draft)"))
         print("="*50)
         run_phase4_email(args)
+        
+        # Record last run timestamp (IST) for UI status
+        _write_last_run()
         
         print("\n" + "="*50)
         print("✅ Pipeline complete!")
