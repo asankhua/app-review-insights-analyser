@@ -342,6 +342,10 @@
           <span class="value" id="themes">—</span>
         </div>
         <div class="status-item">
+          <label>Last Run</label>
+          <span class="value" id="lastRun">—</span>
+        </div>
+        <div class="status-item">
           <label>Last Synced</label>
           <span class="value" id="lastFetched">—</span>
         </div>
@@ -356,7 +360,7 @@
       <h2 class="card-title">Actions</h2>
       <div class="checkbox-row">
         <input type="checkbox" id="useMock" checked>
-        <label for="useMock">Use sample data (no API keys needed)</label>
+        <label for="useMock">Use previous synced data</label>
       </div>
       <div class="actions">
         <button class="btn-primary" id="btnRun" onclick="runPipeline()">Run Pipeline</button>
@@ -433,12 +437,15 @@
     function hideMessage() {
       actionMessage.style.display = 'none';
     }
-    function formatLastFetched(iso) {
+    const IST_OPTS = { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' };
+    function formatIST(iso) {
       try {
-        const d = new Date(iso.replace(' ', 'T'));
+        const s = (iso || '').toString().replace(' ', 'T');
+        if (!s) return '—';
+        const d = new Date(s);
         if (isNaN(d.getTime())) return iso;
-        return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-      } catch (_) { return iso; }
+        return d.toLocaleString(undefined, IST_OPTS);
+      } catch (_) { return iso || '—'; }
     }
     function setLoading(loading) {
       document.getElementById('btnRun').disabled = loading;
@@ -456,10 +463,9 @@
         const s = await r.json();
         document.getElementById('reviews').textContent = s.reviews_count ?? '—';
         document.getElementById('themes').textContent = s.themes_count ?? '—';
-        const last = s.last_scraped || '';
-        document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
-        const lastEmail = s.last_email_sent || '';
-        document.getElementById('lastEmailSent').textContent = lastEmail ? formatLastFetched(lastEmail) : 'Never';
+        document.getElementById('lastRun').textContent = s.last_run ? formatIST(s.last_run) : 'Never';
+        document.getElementById('lastFetched').textContent = s.last_scraped ? formatIST(s.last_scraped) : 'Never';
+        document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
         if (s.pipeline_error && pollTimer) {
           const err = String(s.pipeline_error);
           if (err && err !== '1') showMessage(err, 'error');
@@ -471,6 +477,7 @@
       } catch (e) {
         document.getElementById('reviews').textContent = '?';
         document.getElementById('themes').textContent = '?';
+        document.getElementById('lastRun').textContent = '—';
         document.getElementById('lastFetched').textContent = '—';
         document.getElementById('lastEmailSent').textContent = '—';
         return null;
@@ -525,18 +532,24 @@
     }
 
     async function loadReport() {
+      const usePrevious = document.getElementById('useMock').checked;
+      if (!usePrevious) {
+        showMessage('Check "Use previous synced data" to view the stored report. To generate a new report, run the pipeline first.', 'info');
+        return;
+      }
       setLoading(true);
       hideMessage();
       try {
         const r = await fetch(API + '/api/report');
         if (!r.ok) {
-          showMessage('No report yet. Run the pipeline first.', 'info');
+          showMessage('No report yet. Run the pipeline with "Use previous synced data" checked first.', 'info');
           reportCard.style.display = 'none';
           return;
         }
         const d = await r.json();
         reportContent.textContent = d.content || '';
         reportCard.style.display = 'block';
+        hideMessage();
       } catch (e) {
         showMessage(e.message || 'Failed to load report', 'error');
       } finally {

@@ -532,18 +532,24 @@
     }
 
     async function loadReport() {
+      const usePrevious = document.getElementById('useMock').checked;
+      if (!usePrevious) {
+        showMessage('Check "Use previous synced data" to view the stored report. To generate a new report, run the pipeline first.', 'info');
+        return;
+      }
       setLoading(true);
       hideMessage();
       try {
         const r = await fetch(API + '/api/report');
         if (!r.ok) {
-          showMessage('No report yet. Run the pipeline first.', 'info');
+          showMessage('No report yet. Run the pipeline with "Use previous synced data" checked first.', 'info');
           reportCard.style.display = 'none';
           return;
         }
         const d = await r.json();
         reportContent.textContent = d.content || '';
         reportCard.style.display = 'block';
+        hideMessage();
       } catch (e) {
         showMessage(e.message || 'Failed to load report', 'error');
       } finally {
