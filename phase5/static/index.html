@@ -292,10 +292,6 @@
           <span class="value" id="themes">—</span>
         </div>
         <div class="status-item">
-          <label>Report</label>
-          <span class="value" id="report">—</span>
-        </div>
-        <div class="status-item">
           <label>Last Synced (Reviews)</label>
           <span class="value" id="lastFetched">—</span>
         </div>
@@ -383,14 +379,6 @@
         return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
       } catch (_) { return iso; }
     }
-    function formatReportDate(dateStr) {
-      if (!dateStr) return '—';
-      try {
-        const d = new Date(dateStr + 'T12:00:00');
-        if (isNaN(d.getTime())) return dateStr;
-        return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
-      } catch (_) { return dateStr; }
-    }
     function setLoading(loading) {
       document.getElementById('btnRun').disabled = loading;
       document.getElementById('btnView').disabled = loading;
@@ -406,7 +394,6 @@
         const s = await r.json();
         document.getElementById('reviews').textContent = s.reviews_count ?? '—';
         document.getElementById('themes').textContent = s.themes_count ?? '—';
-        document.getElementById('report').textContent = s.has_report ? formatReportDate(s.last_report_date) : 'No report';
         const last = s.last_scraped || '';
         document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
         const lastEmail = s.last_email_sent || '';
@@ -420,7 +407,6 @@
       } catch (e) {
         document.getElementById('reviews').textContent = '?';
         document.getElementById('themes').textContent = '?';
-        document.getElementById('report').textContent = 'Error';
         document.getElementById('lastFetched').textContent = '—';
         document.getElementById('lastEmailSent').textContent = '—';
         return null;
