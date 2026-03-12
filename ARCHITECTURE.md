@@ -97,17 +97,16 @@ The codebase is organized into separate phases for better maintainability and mo
 - **No** analytics, scheduling, or config UI (use CLI / .env)
 
 ### Phase 6: Scheduler (`phase6/`)
-- **Purpose**: Run weekly pulse automatically every Sunday at 9:00 AM IST, with email to fixed recipient
-- **Recipient**: `ashishmyweb@gmail.com` (fixed)
+- **Purpose**: Run weekly pulse automatically every Sunday at 9:00 AM IST — **fetch data only** (Phases 1–3). **Email is sent from the UI**, not from the scheduler.
 - **Scope**: **100 reviews, 8 weeks** (no 5000-review runs)
 - **Key Components**:
-  - `scheduler.py`: Runs CLI `main.py --phase run --send --recipient ... --weeks 8 --count 100`
+  - `scheduler.py`: Runs CLI `main.py --phase run --skip-email --weeks 8 --count 100` (no email)
   - `daemon.py`: APScheduler daemon (9:00 AM IST, Sundays)
-  - `config.py`: `SCHEDULED_RECIPIENT`, `SCHEDULED_WEEKS=8`, `SCHEDULED_COUNT=100`
+  - `config.py`: `SCHEDULED_WEEKS=8`, `SCHEDULED_COUNT=100`
 - **Integration**:
   - **CLI**: `python -m phase6.scheduler` (one-shot) or `python -m phase6.daemon` (long-running)
   - **GitHub Actions**: `.github/workflows/weekly-pulse.yml` — cron `30 3 * * 0` (3:30 AM UTC = 9 AM IST, Sundays)
-- **Required Secrets** (GitHub): `GROQ_API_KEY`, `GEMINI_API_KEY`, `EMAIL_SENDER`, `EMAIL_PASSWORD`
+- **Required Secrets** (GitHub): `GROQ_API_KEY`, `GEMINI_API_KEY` (no email secrets; email from UI)
 
 ### Phase 4: Email Delivery (`phase4/`)
 - **Purpose**: Deliver weekly insights via email with SMTP integration
@@ -133,8 +132,8 @@ The codebase is organized into separate phases for better maintainability and mo
 ```
 Phase 1 (Reviews) → Phase 2a (Themes) → Phase 2b (Classified Reviews) → Phase 3 (Weekly Notes) → Phase 4 (Email Delivery)
                                                                     ↑
-Phase 5 (Orchestration + API + Web UI) invokes Phases 1–4 and serves the Web UI
-Phase 6 (Scheduler) invokes CLI (Phases 1–4) at 9:00 AM IST weekly; GitHub Actions runs the same
+Phase 5 (Orchestration + API + Web UI) invokes Phases 1–4 and serves the Web UI (email from UI)
+Phase 6 (Scheduler) invokes CLI (Phases 1–3, --skip-email) at 9:00 AM IST weekly; GitHub Actions runs the same
 ```
 
 Each phase depends on the output of the previous phase, creating a clear data pipeline.
@@ -809,6 +808,7 @@ python main.py [options]
 --phase {scrape|analyze|classify|report|email|all}  # Run specific phase or all
 --weeks N                                           # Review window (default: 8, allow 8-12)
 --send                                              # Send email via SMTP in Phase 4
+--skip-email                                        # Skip Phase 4 (scheduler: fetch only; email from UI)
 --recipient EMAIL                                   # Override EMAIL_RECIPIENT
 --recipient-name NAME                               # Personalized greeting
 --date YYYY-MM-DD                                   # Report date (default: today)
@@ -840,7 +840,7 @@ python -m phase6.daemon       # long-running, Sundays 9 AM IST
 ### Behavior
 - **Runs every**: Sunday at 9:00 AM IST
 - **Configuration**: 8 weeks, 100 reviews (not 5000)
-- **Email**: Always sent to fixed recipient
+- **Email**: Not sent by scheduler. Fetch data only (`--skip-email`). Send from Web UI.
 - **Logs**: data/logs/scheduler.log
 
 ### Configuration (.env)
@@ -865,20 +865,18 @@ INDMONEY_APP_NAME=INDMoney
 `.github/workflows/weekly-pulse.yml`
 
 ### Triggers
-- **Schedule**: Every Sunday at 3:35 PM IST (10:05 UTC)
-- **Manual**: workflow_dispatch from Actions tab
+- **Schedule**: Every Sunday at 9:00 AM IST (3:30 AM UTC)
+- **Manual**: workflow_dispatch from Actions tab (optional: use sample data)
 
 ### Behavior
+- **Fetch data only** — Phases 1–3. Phase 4 (email) skipped via `--skip-email`. Email is sent from the Web UI.
 ```bash
-python main.py --phase run --send --weeks 8 --count 100 --recipient ashishmyweb@gmail.com
+python main.py --phase run --skip-email --weeks 8 --count 100
 ```
 
 ### Required Secrets
-- `GROQ_API_KEY`: Phase 2 (theme discovery, classification)
+- `GROQ_API_KEY`: Phase 2 (theme discovery)
 - `GEMINI_API_KEY`: Phase 3 (weekly note generation)
-- `EMAIL_SENDER`: SMTP From address
-- `EMAIL_PASSWORD`: SMTP auth (Gmail App Password)
-- Recipient fixed: `ashishmyweb@gmail.com` (hardcoded in workflow)
 
 ## Web UI as Trigger
 

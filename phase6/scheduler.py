@@ -1,6 +1,6 @@
 """
-Phase 6: Scheduler - runs full pipeline + email at 9:00 AM IST every Sunday.
-Uses the CLI via subprocess.
+Phase 6: Scheduler - runs full pipeline (Phases 1-3 only) at 9:00 AM IST every Sunday.
+Fetch data only; email is sent from the Web UI.
 """
 import logging
 import os
@@ -10,7 +10,7 @@ from pathlib import Path
 
 _SUBPROCESS_ENV = {**os.environ, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"}
 
-from .config import SCHEDULED_RECIPIENT, SCHEDULED_WEEKS, SCHEDULED_COUNT
+from .config import SCHEDULED_WEEKS, SCHEDULED_COUNT
 
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -18,8 +18,8 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 def run_scheduled_pulse(mock: bool = False) -> int:
     """
-    Run full pipeline (Phases 1-4) and send email to fixed recipient.
-    Uses: python main.py --phase run --send --recipient ashishmyweb@gmail.com
+    Run full pipeline (Phases 1-3). Phase 4 skipped (--skip-email). Email from UI.
+    Uses: python main.py --phase run --skip-email --weeks 8 --count 100
     If mock=True: uses sample data, skips Play Store scrape and Groq/Gemini APIs.
     Returns exit code (0 = success).
     """
@@ -28,9 +28,7 @@ def run_scheduled_pulse(mock: bool = False) -> int:
         str(PROJECT_ROOT / "main.py"),
         "--phase",
         "run",
-        "--send",
-        "--recipient",
-        SCHEDULED_RECIPIENT,
+        "--skip-email",
         "--weeks",
         str(SCHEDULED_WEEKS),
         "--count",

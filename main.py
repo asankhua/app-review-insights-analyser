@@ -388,11 +388,16 @@ def run_full_pipeline(args):
         print("="*50)
         run_phase3_generate(args)
         
-        # Phase 4
-        print("\n" + "="*50)
-        print("PHASE 4: Email" + (" (send)" if args.send else " (draft)"))
-        print("="*50)
-        run_phase4_email(args)
+        # Phase 4 (skipped when --skip-email, e.g. scheduler)
+        if getattr(args, 'skip_email', False):
+            print("\n" + "="*50)
+            print("PHASE 4: Skipped (--skip-email). Email from UI.")
+            print("="*50)
+        else:
+            print("\n" + "="*50)
+            print("PHASE 4: Email" + (" (send)" if args.send else " (draft)"))
+            print("="*50)
+            run_phase4_email(args)
         
         # Record last run timestamp (IST) for UI status
         _write_last_run()
@@ -478,6 +483,11 @@ Examples:
         '--send',
         action='store_true',
         help='Send email via SMTP (default: dry-run mode)'
+    )
+    parser.add_argument(
+        '--skip-email',
+        action='store_true',
+        help='Skip Phase 4 (email) entirely. Use for scheduler: fetch data only, send from UI.'
     )
     
     parser.add_argument(

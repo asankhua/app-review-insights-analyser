@@ -36,14 +36,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Fetch data only (Phases 1–3). Email sending is done from the UI.
-      - name: Run weekly pulse (fetch data, no email)
+      # Fetch data only (Phases 1–3). Phase 4 skipped. Email from UI.
+      - name: Run weekly pulse (fetch data, --skip-email)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ "${{ github.event.inputs.use_mock }}" = "true" ]; then
-            python main.py --phase run --mock --weeks 8 --count 100
+            python main.py --phase run --mock --skip-email --weeks 8 --count 100
           else
-            python main.py --phase run --weeks 8 --count 100
+            python main.py --phase run --skip-email --weeks 8 --count 100
           fi
