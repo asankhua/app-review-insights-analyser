@@ -1,4 +1,4 @@
-# Backend API for Railway deployment
+# Backend API for Render.com (Docker)
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -15,5 +15,5 @@ RUN mkdir -p data/reviews data/reports data/drafts data/deliveries data/logs dat
 
 EXPOSE 8000
 
-# Railway injects PORT at runtime; default to 8000 for local
+# Render injects PORT at runtime; default to 8000 for local
 CMD sh -c 'uvicorn phase5.api:app --host 0.0.0.0 --port ${PORT:-8000}'

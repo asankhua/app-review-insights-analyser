@@ -3,46 +3,54 @@
 ## Architecture
 
 - **Frontend**: Static HTML/CSS/JS → **Vercel** (recommended) or Docker
-- **Backend**: FastAPI → **Railway** (Docker)
+- **Backend**: FastAPI → **Render.com** (Docker)
 
 ---
 
-## 1. Deploy Backend to Railway
+## 1. Deploy Backend to Render.com
 
-### Via Docker
+### Via Docker (Blueprint)
 
-1. Create a new project on [Railway](https://railway.app)
+1. Go to [Render](https://render.com) → **New** → **Blueprint**
 2. Connect your GitHub repo
-3. Set **Root Directory** to `.` (project root)
-4. Railway will detect the `Dockerfile` and build it
-5. Add **Environment Variables** in Railway dashboard:
+3. Render will detect `render.yaml` and create the web service
+4. Add **Environment Variables** in the Dashboard (secrets from `.env`):
    - `GROQ_API_KEY`
    - `GEMINI_API_KEY`
    - `EMAIL_SENDER`
    - `EMAIL_PASSWORD`
    - `EMAIL_RECIPIENT`
-   - `CORS_ORIGINS` = `https://your-frontend.vercel.app` (add your Vercel URL)
-6. Deploy. Railway will give you a URL like `https://xxx.railway.app`
+   - `CORS_ORIGINS` = `https://your-frontend.vercel.app` (add after deploying frontend)
+5. Deploy. **Backend URL:** `https://app-review-insights-api.onrender.com` (or your service name)
+
+### Via Docker (Manual)
+
+1. **New** → **Web Service**
+2. Connect repo, set **Environment** to **Docker**
+3. **Dockerfile Path**: `./Dockerfile` (or leave default if Dockerfile is at root)
+4. Add the same environment variables as above
+5. Deploy
 
 ---
 
 ## 2. Deploy Frontend to Vercel
 
-### Option A: Vercel (Recommended – no Docker)
+### Option A: Vercel (Recommended)
 
 1. Go to [Vercel](https://vercel.com) and import your repo
-2. Set **Root Directory** to `frontend`
+2. **Root Directory**: Set to `frontend` (or leave `.` — root `vercel.json` handles the build)
 3. Add **Environment Variable**:
-   - `API_URL` = `https://your-railway-app.railway.app` (your Railway backend URL, no trailing slash)
-4. Deploy. Vercel will run `npm run build` which injects the API URL into the frontend
+   - `API_URL` = `https://app-review-insights-api.onrender.com` (your Render backend URL, no trailing slash)
+4. Deploy. Vercel runs `npm run build` which injects the API URL into the frontend
+5. Copy your Vercel URL and add it to Render's `CORS_ORIGINS`
 
-### Option B: Frontend via Docker (e.g. Railway, Fly.io)
+### Option B: Frontend via Docker
 
-If you prefer to run the frontend in Docker:
+If you prefer to run the frontend in Docker (e.g. on Render, Fly.io):
 
 ```bash
-# Build with your Railway API URL
-docker build --build-arg API_URL=https://your-api.railway.app -f frontend/Dockerfile frontend/
+# Build with your Render API URL
+docker build --build-arg API_URL=https://your-api.onrender.com -f frontend/Dockerfile frontend/
 
 # Run
 docker run -p 80:80 <image>
@@ -52,13 +60,13 @@ docker run -p 80:80 <image>
 
 ## 3. CORS Setup
 
-The backend must allow your frontend origin. In Railway, set:
+The backend must allow your frontend origin. In Render → Environment, add:
 
 ```
-CORS_ORIGINS=https://your-app.vercel.app,https://your-custom-domain.com
+CORS_ORIGINS=https://app-review-insights-analyser.vercel.app
 ```
 
-Comma-separate multiple origins. For local dev, `http://localhost:3000` is included by default.
+Use your actual Vercel URL. Comma-separate for multiple: `https://app.vercel.app,https://custom.com`
 
 ---
 
@@ -67,9 +75,7 @@ Comma-separate multiple origins. For local dev, `http://localhost:3000` is inclu
 Run both together locally:
 
 ```bash
-# Terminal 1: Backend
 python run_web.py
-
 # Open http://localhost:8000 — serves frontend + API from same origin
 ```
 
