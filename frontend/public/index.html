@@ -126,11 +126,12 @@
       margin-bottom: 4px;
     }
     .status-item .value {
-      font-size: 1.25rem;
+      font-size: 1.125rem;
       font-weight: 600;
       color: var(--primary);
       word-break: break-word;
       overflow-wrap: break-word;
+      line-height: 1.4;
     }
 
     .form-group {
@@ -459,9 +460,10 @@
         document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
         const lastEmail = s.last_email_sent || '';
         document.getElementById('lastEmailSent').textContent = lastEmail ? formatLastFetched(lastEmail) : 'Never';
-        if (s.pipeline_error) {
-          showMessage(s.pipeline_error, 'error');
-          if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        if (s.pipeline_error && pollTimer) {
+          showMessage(String(s.pipeline_error), 'error');
+          clearInterval(pollTimer);
+          pollTimer = null;
           setLoading(false);
         }
         return s;
