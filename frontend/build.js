@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const apiUrl = (process.env.API_URL || '').replace(/\/$/, '');
+const apiUrl = (process.env.API_URL || 'https://app-review-insights-analyser.onrender.com').replace(/\/$/, '');
 const src = path.join(__dirname, 'public', 'index.html');
 const out = path.join(__dirname, 'public', 'index.html');
 
