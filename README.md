@@ -63,19 +63,24 @@ The goal is to simulate how Product and Support teams use AI to generate structu
 
 ```
 app-review-insights-analyser/
-├── phase1/           # Data Ingestion (scrape reviews)
+├── phase1/            # Data Ingestion (scrape reviews)
 ├── phase2a/           # Theme Discovery (Groq)
 ├── phase2b/           # Review Classification (Groq)
 ├── phase3/            # Weekly Note Generation (Gemini)
 ├── phase4/            # Email Delivery (SMTP)
-├── phase5/            # Orchestration, API, Web UI
+├── phase5/            # Orchestration, API
 │   ├── api.py
 │   ├── pipeline.py
-│   └── static/index.html
+│   └── static/        # Static UI (copied to frontend for Vercel)
 ├── phase6/            # Scheduler (100 reviews, 8 weeks)
+├── frontend/          # Frontend for Vercel deployment
+│   ├── public/       # Static HTML (build injects API URL)
+│   ├── Dockerfile    # Optional: Docker deploy
+│   └── vercel.json
 ├── src/               # Shared config and services
 ├── main.py            # CLI entry point
-├── run_web.py         # Start Web UI server
+├── run_web.py         # Start Web UI server (serves phase5/static locally)
+├── Dockerfile         # Backend for Railway
 ├── .github/workflows/ # GitHub Actions (weekly-pulse.yml)
 ├── data/              # reviews, reports, drafts, deliveries, cache
 └── scripts/           # seed_sample_data.py, etc.
@@ -230,6 +235,15 @@ Play Store → Phase 1 (Scrape) → Phase 2a (Themes) → Phase 2b (Classify) �
 pip install pytest
 python -m pytest tests/ -v
 ```
+
+---
+
+## Deployment
+
+- **Backend (API)**: Railway (Docker)
+- **Frontend**: Vercel
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions.
 
 ---
 

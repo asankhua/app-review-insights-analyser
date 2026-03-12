@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -31,7 +32,17 @@ from phase5.pipeline import (
     send_email as pipeline_send_email,
 )
 
-app = FastAPI(title="INDMoney Review Insights", version="1.0")
+app = FastAPI(title="App Review Insights API", version="1.0")
+
+# CORS for Vercel frontend (and localhost for dev)
+ALLOWED_ORIGINS = [x.strip() for x in os.environ.get("CORS_ORIGINS", "http://localhost:8000,http://localhost:3000").split(",") if x.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 STATIC_DIR = Path(__file__).parent / "static"
 
