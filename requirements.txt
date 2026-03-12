@@ -4,7 +4,7 @@ pydantic==2.5.0
 emoji==2.10.0
 python-dotenv==1.0.0
 groq>=0.13.0  # 0.13+ fixes httpx proxies compatibility (0.11 fails with httpx>=0.28)
-google-genai>=0.3.0
+google-generativeai>=0.3.0
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 APScheduler>=3.10.0
