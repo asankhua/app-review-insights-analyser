@@ -7,11 +7,19 @@ on:
     # Cron: minute hour day-of-month month day-of-week (UTC)
     # Sunday at 3:30 AM UTC = 9:00 AM IST
     - cron: '30 3 * * 0'
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      use_mock:
+        description: 'Use sample data (no API keys needed)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   weekly-pulse:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -26,12 +34,18 @@ jobs:
           pip install -r requirements.txt
 
       # Scope: 100 reviews, 8 weeks
+      # Use RESEND_API_KEY for email (Gmail SMTP blocked from GitHub Actions).
+      # Add RESEND_API_KEY in repo Secrets. EMAIL_SENDER must use a Resend-verified domain.
       - name: Run weekly pulse and send email
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_RECIPIENT: ashishmyweb@gmail.com
         run: |
-          python main.py --phase run --send --recipient ashishmyweb@gmail.com --weeks 8 --count 100
+          if [ "${{ github.event.inputs.use_mock }}" = "true" ]; then
+            python main.py --phase run --mock --send --recipient ashishmyweb@gmail.com --weeks 8 --count 100
+          else
+            python main.py --phase run --send --recipient ashishmyweb@gmail.com --weeks 8 --count 100
+          fi
