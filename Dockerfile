@@ -10,9 +10,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY . .
 
-# Create data directories and seed sample report (for "Use previous synced data" + View Report)
+# Create data directories and seed sample data (status tiles, View Report)
 RUN mkdir -p data/reviews data/reports data/drafts data/deliveries data/logs data/cache
 COPY sample_data/pulse-2025-01-01.md data/reports/
+RUN python scripts/seed_sample_data.py && \
+    python -c "from datetime import datetime; from zoneinfo import ZoneInfo; open('data/logs/last_run.txt','w').write(datetime.now(ZoneInfo('Asia/Kolkata')).isoformat())"
 
 EXPOSE 8000
 
