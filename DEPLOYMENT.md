@@ -18,11 +18,10 @@
    - `GROQ_API_KEY`
    - `GEMINI_API_KEY`
    - `EMAIL_SENDER`
-   - `EMAIL_PASSWORD`
    - `EMAIL_RECIPIENT`
    - `CORS_ORIGINS` = `https://your-frontend.vercel.app` (add after deploying frontend)
-
-   Note: Render free tier blocks SMTP ports; email requires a paid plan.
+   - **Email (Render free tier):** Add `RESEND_API_KEY` — [resend.com](https://resend.com) free tier, works on Render (SMTP blocked). Use `EMAIL_SENDER` with a [verified domain](https://resend.com/domains).
+   - **Email (local):** Use `EMAIL_SENDER` + `EMAIL_PASSWORD` (SMTP). No Resend needed.
 5. Deploy. **Backend URL:** `https://app-review-insights-analyser.onrender.com`
 
 ### Via Docker (Manual)

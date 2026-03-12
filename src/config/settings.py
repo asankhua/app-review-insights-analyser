@@ -53,6 +53,7 @@ class Config:
     EMAIL_SENDER = os.getenv("EMAIL_SENDER")
     EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
     EMAIL_RECIPIENT = os.getenv("EMAIL_RECIPIENT")
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY")  # For Render free tier (SMTP blocked); optional
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     
