@@ -133,6 +133,10 @@
       overflow-wrap: break-word;
       line-height: 1.4;
     }
+    .status-item .value.value-count {
+      font-size: 1.75rem;
+      line-height: 1.2;
+    }
 
     .form-group {
       margin-bottom: 16px;
@@ -335,11 +339,11 @@
       <div class="status-grid" id="status">
         <div class="status-item">
           <label>Reviews</label>
-          <span class="value" id="reviews">—</span>
+          <span class="value value-count" id="reviews">—</span>
         </div>
         <div class="status-item">
           <label>Themes</label>
-          <span class="value" id="themes">—</span>
+          <span class="value value-count" id="themes">—</span>
         </div>
         <div class="status-item">
           <label>Scheduler Run</label>
@@ -486,14 +490,36 @@
       }
     }
 
+    function isTodayIST(iso) {
+      try {
+        let s = (iso || '').toString().replace(' ', 'T').trim();
+        if (!s) return false;
+        if (!/Z|[+-]\d{2}:?\d{2}$/.test(s)) s = s.replace(/(\.\d+)?$/, '$1Z');
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return false;
+        const opts = { timeZone: 'Asia/Kolkata' };
+        const dStr = d.toLocaleDateString('en-CA', opts);
+        const nowStr = new Date().toLocaleDateString('en-CA', opts);
+        return dStr === nowStr;
+      } catch (_) { return false; }
+    }
+
     async function runPipeline() {
-      setLoading(true);
       hideMessage();
       if (!API) {
         showMessage('API URL not configured. Set API_URL in build.', 'error');
-        setLoading(false);
         return;
       }
+      try {
+        const s = await fetch(API + '/api/status');
+        const status = await s.json();
+        if (status.last_run && isTodayIST(status.last_run)) {
+          showMessage('Scheduler already ran today. No need to run the pipeline again.', 'info');
+          return;
+        }
+      } catch (_) { /* continue if status fetch fails */ }
+      setLoading(true);
+      hideMessage();
       try {
         const mock = document.getElementById('useMock').checked;
         const r = await fetch(API + '/api/run', {
