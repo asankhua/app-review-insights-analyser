@@ -36,19 +36,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Scope: 100 reviews, 8 weeks
-      # Use RESEND_API_KEY for email (Gmail SMTP blocked from GitHub Actions).
-      # Add RESEND_API_KEY in repo Secrets. EMAIL_SENDER must use a Resend-verified domain.
-      - name: Run weekly pulse and send email
+      # Fetch data only (Phases 1–3). Email sending is done from the UI.
+      - name: Run weekly pulse (fetch data, no email)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_RECIPIENT: ashishmyweb@gmail.com
         run: |
           if [ "${{ github.event.inputs.use_mock }}" = "true" ]; then
-            python main.py --phase run --mock --send --recipient ashishmyweb@gmail.com --weeks 8 --count 100
+            python main.py --phase run --mock --weeks 8 --count 100
           else
-            python main.py --phase run --send --recipient ashishmyweb@gmail.com --weeks 8 --count 100
+            python main.py --phase run --weeks 8 --count 100
           fi
