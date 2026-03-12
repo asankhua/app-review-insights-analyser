@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Review Insights Dashboard | Weekly Pulse</title>
+  <title>App Review Insights Analyzer | Weekly Pulse</title>
   <style>
     :root,
     [data-theme="light"] {
@@ -269,7 +269,7 @@
   <header class="header">
     <div class="header-inner">
       <div class="header-brand">
-        <h1>App Review Insights Dashboard</h1>
+        <h1>App Review Insights Analyzer</h1>
         <p class="subtitle">Weekly pulse from Play Store reviews — themes, quotes & action ideas for Product & Growth</p>
       </div>
       <button type="button" class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
@@ -296,8 +296,12 @@
           <span class="value" id="report">—</span>
         </div>
         <div class="status-item">
-          <label>Last Synced</label>
+          <label>Last Synced (Reviews)</label>
           <span class="value" id="lastFetched">—</span>
+        </div>
+        <div class="status-item">
+          <label>Last Email Sent</label>
+          <span class="value" id="lastEmailSent">—</span>
         </div>
       </div>
     </div>
@@ -379,6 +383,14 @@
         return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
       } catch (_) { return iso; }
     }
+    function formatReportDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        const d = new Date(dateStr + 'T12:00:00');
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
+      } catch (_) { return dateStr; }
+    }
     function setLoading(loading) {
       document.getElementById('btnRun').disabled = loading;
       document.getElementById('btnView').disabled = loading;
@@ -397,6 +409,8 @@
         document.getElementById('report').textContent = s.has_report ? (s.last_report_date || 'Yes') : 'No';
         const last = s.last_scraped || '';
         document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
+        const lastEmail = s.last_email_sent || '';
+        document.getElementById('lastEmailSent').textContent = lastEmail ? formatLastFetched(lastEmail) : 'Never';
         if (s.pipeline_error) {
           showMessage(s.pipeline_error, 'error');
           if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -408,6 +422,7 @@
         document.getElementById('themes').textContent = '?';
         document.getElementById('report').textContent = 'Error';
         document.getElementById('lastFetched').textContent = '—';
+        document.getElementById('lastEmailSent').textContent = '—';
         return null;
       }
     }
@@ -493,6 +508,7 @@
         const d = await r.json();
         if (!r.ok) throw new Error(d.detail || 'Send failed');
         showMessage('Email sent to ' + (d.recipient || 'default recipient'), 'success');
+        fetchStatus();
       } catch (e) {
         showMessage(e.message || 'Email send failed', 'error');
       } finally {

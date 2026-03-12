@@ -113,6 +113,26 @@ def get_status() -> dict:
     return _get_status()
 
 
+def _get_last_email_sent() -> Optional[str]:
+    """Get most recent email sent timestamp from delivery records."""
+    try:
+        deliveries_dir = PROJECT_ROOT / "data" / "deliveries"
+        if not deliveries_dir.exists():
+            return None
+        files = list(deliveries_dir.glob("delivery_*.json"))
+        if not files:
+            return None
+        files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        for f in files[:20]:
+            with open(f) as fp:
+                data = json.load(fp)
+            if data.get("response", {}).get("status") == "sent":
+                return data.get("response", {}).get("sent_at")
+        return None
+    except Exception:
+        return None
+
+
 def _get_status() -> dict:
     """Internal status aggregation from data files."""
     reviews_dir = PROJECT_ROOT / "data" / "reviews"
@@ -123,6 +143,8 @@ def _get_status() -> dict:
         "has_report": False,
         "report_path": None,
         "last_report_date": None,
+        "last_scraped": None,
+        "last_email_sent": _get_last_email_sent(),
         "pipeline_running": _pipeline_state["running"],
         "pipeline_error": _pipeline_state["error"],
     }
