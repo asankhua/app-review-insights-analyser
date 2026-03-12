@@ -877,6 +877,8 @@ python main.py --phase run --skip-email --weeks 8 --count 100
 ### Required Secrets
 - `GROQ_API_KEY`: Phase 2 (theme discovery)
 - `GEMINI_API_KEY`: Phase 3 (weekly note generation)
+- `RENDER_URL`: Backend URL (e.g. `https://app-review-insights-analyser.onrender.com`) for upload
+- `REPORT_UPLOAD_SECRET`: Must match Render's `REPORT_UPLOAD_SECRET` for report upload
 
 ## Web UI as Trigger
 

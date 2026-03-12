@@ -22,6 +22,7 @@
    - `CORS_ORIGINS` = `https://your-frontend.vercel.app` (add after deploying frontend)
    - **Email (Render free tier):** Add `RESEND_API_KEY` — [resend.com](https://resend.com) free tier, works on Render (SMTP blocked). Use `EMAIL_SENDER` with a [verified domain](https://resend.com/domains).
    - **Email (local):** Use `EMAIL_SENDER` + `EMAIL_PASSWORD` (SMTP). No Resend needed.
+   - **Scheduler → Render sync:** Add `REPORT_UPLOAD_SECRET` (shared with GitHub Secrets) so the scheduler can upload the report.
 5. Deploy. **Backend URL:** `https://app-review-insights-analyser.onrender.com`
 
 ### Via Docker (Manual)

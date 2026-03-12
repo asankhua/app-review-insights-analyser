@@ -19,7 +19,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -60,6 +60,13 @@ class RunRequest(BaseModel):
 
 class SendEmailRequest(BaseModel):
     recipient: Optional[str] = None
+
+
+class SyncUploadRequest(BaseModel):
+    """Payload from scheduler/workflow to sync report and status to backend."""
+    report_content: str
+    report_date: str  # YYYY-MM-DD
+    last_run: Optional[str] = None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -113,6 +120,21 @@ async def api_email_preview():
     if preview is None:
         raise HTTPException(status_code=404, detail="No report found. Run pipeline first.")
     return preview
+
+
+@app.post("/api/upload/sync")
+async def api_upload_sync(req: SyncUploadRequest, x_upload_secret: Optional[str] = Header(None, alias="X-Upload-Secret")):
+    """Receive report + status from scheduler (GitHub Actions). Secured with REPORT_UPLOAD_SECRET."""
+    expected = os.environ.get("REPORT_UPLOAD_SECRET")
+    if not expected or x_upload_secret != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    from phase5.pipeline import _save_sync_upload
+    _save_sync_upload(
+        report_content=req.report_content,
+        report_date=req.report_date,
+        last_run=req.last_run,
+    )
+    return {"success": True, "message": "Sync uploaded"}
 
 
 @app.post("/api/email/send")

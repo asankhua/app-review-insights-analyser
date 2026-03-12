@@ -129,6 +129,22 @@ def _write_last_run() -> None:
         pass
 
 
+def _save_sync_upload(report_content: str, report_date: str, last_run: Optional[str] = None) -> None:
+    """Save uploaded report and status from scheduler (GitHub Actions)."""
+    try:
+        reports_dir = PROJECT_ROOT / "data" / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        path = reports_dir / f"pulse-{report_date}.md"
+        path.write_text(report_content, encoding="utf-8")
+        if last_run:
+            logs_dir = PROJECT_ROOT / "data" / "logs"
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            (logs_dir / "last_run.txt").write_text(last_run.strip(), encoding="utf-8")
+    except Exception as e:
+        logger.exception("Sync upload failed: %s", e)
+        raise
+
+
 def _get_last_run() -> Optional[str]:
     """Get last pipeline/scheduler run timestamp from logs."""
     try:
@@ -141,19 +157,23 @@ def _get_last_run() -> Optional[str]:
 
 
 def _get_last_email_sent() -> Optional[str]:
-    """Get most recent email sent timestamp from delivery records."""
+    """Get most recent email sent timestamp from delivery records or last_email_sent.txt."""
     try:
+        fallback = PROJECT_ROOT / "data" / "logs" / "last_email_sent.txt"
+        if fallback.exists():
+            return fallback.read_text(encoding="utf-8").strip() or None
         deliveries_dir = PROJECT_ROOT / "data" / "deliveries"
         if not deliveries_dir.exists():
             return None
-        files = list(deliveries_dir.glob("delivery_*.json"))
+        files = list(deliveries_dir.glob("delivery_email_*.json")) or list(deliveries_dir.glob("delivery_*.json"))
         if not files:
             return None
         files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
         for f in files[:20]:
             with open(f) as fp:
                 data = json.load(fp)
-            if data.get("response", {}).get("status") == "sent":
+            status = data.get("response", {}).get("status")
+            if status in ("sent", "SENT"):
                 return data.get("response", {}).get("sent_at")
         return None
     except Exception:
@@ -240,7 +260,7 @@ def get_email_preview() -> Optional[dict]:
 
 
 def _get_latest_report_path() -> Optional[str]:
-    """Get path to latest pulse markdown. Falls back to sample_data when no report exists."""
+    """Get path to latest pulse markdown. Prefer data/reports (scheduler/sync); fallback to sample_data."""
     reports_dir = PROJECT_ROOT / "data" / "reports"
     if reports_dir.exists():
         pulse_files = list(reports_dir.glob("pulse-*.md"))
@@ -270,6 +290,14 @@ def send_email(recipient: Optional[str] = None) -> dict:
             recipient_email=recipient,
             mode=EmailMode.SEND,
         )
+        if response.status.value == "sent" and response.sent_at:
+            try:
+                logs_dir = PROJECT_ROOT / "data" / "logs"
+                logs_dir.mkdir(parents=True, exist_ok=True)
+                ts = response.sent_at.isoformat() if hasattr(response.sent_at, "isoformat") else str(response.sent_at)
+                (logs_dir / "last_email_sent.txt").write_text(ts, encoding="utf-8")
+            except Exception:
+                pass
         return {
             "success": response.status.value == "sent",
             "message_id": response.message_id,
