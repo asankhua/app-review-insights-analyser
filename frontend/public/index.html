@@ -386,6 +386,8 @@
       document.body.classList.toggle('loading', loading);
     }
 
+    let pollTimer = null;
+
     async function fetchStatus() {
       try {
         const r = await fetch(API + '/api/status');
@@ -395,11 +397,18 @@
         document.getElementById('report').textContent = s.has_report ? (s.last_report_date || 'Yes') : 'No';
         const last = s.last_scraped || '';
         document.getElementById('lastFetched').textContent = last ? formatLastFetched(last) : 'Never';
+        if (s.pipeline_error) {
+          showMessage(s.pipeline_error, 'error');
+          if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+          setLoading(false);
+        }
+        return s;
       } catch (e) {
         document.getElementById('reviews').textContent = '?';
         document.getElementById('themes').textContent = '?';
         document.getElementById('report').textContent = 'Error';
         document.getElementById('lastFetched').textContent = '—';
+        return null;
       }
     }
 
@@ -418,11 +427,23 @@
           const msg = Array.isArray(d.detail) ? d.detail.map(x => x.msg || x).join('; ') : (d.detail || 'Pipeline failed');
           throw new Error(msg);
         }
-        showMessage('Pipeline completed. Reviews: ' + (d.stats?.reviews_count ?? '?') + ', Themes: ' + (d.stats?.themes_count ?? '?'), 'success');
-        fetchStatus();
+        showMessage('Pipeline running... (may take 1–2 min). Checking status...', 'info');
+        if (d.started) {
+          pollTimer = setInterval(async () => {
+            const s = await fetchStatus();
+            if (s && !s.pipeline_running) {
+              if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+              setLoading(false);
+              showMessage('Pipeline completed. Reviews: ' + (s.reviews_count ?? '?') + ', Themes: ' + (s.themes_count ?? '?'), 'success');
+            }
+          }, 2500);
+        } else {
+          showMessage('Pipeline completed. Reviews: ' + (d.stats?.reviews_count ?? '?') + ', Themes: ' + (d.stats?.themes_count ?? '?'), 'success');
+          fetchStatus();
+          setLoading(false);
+        }
       } catch (e) {
         showMessage(e.message || 'Pipeline failed', 'error');
-      } finally {
         setLoading(false);
       }
     }

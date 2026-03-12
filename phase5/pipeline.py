@@ -19,6 +19,9 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 _SUBPROCESS_ENV = {**os.environ, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"}
 
+# Shared state for background pipeline (avoids Render 30s request timeout)
+_pipeline_state = {"running": False, "error": None}
+
 
 @dataclass
 class PipelineResult:
@@ -49,10 +52,13 @@ def _run_in_process(mock: bool, weeks: int, count: int, send_email: bool) -> Pip
     """Run in API process (avoids subprocess segfault on ARM Mac)."""
     sys.path.insert(0, str(PROJECT_ROOT))
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
+    _pipeline_state["running"] = True
+    _pipeline_state["error"] = None
     try:
         from main import run_pipeline_sync
         ok, err = run_pipeline_sync(mock=mock, weeks=weeks, count=count, send=send_email, recipient=None)
         if not ok:
+            _pipeline_state["error"] = err or "Unknown error"
             return PipelineResult(success=False, message="Pipeline failed", error=err or "Unknown error")
         return PipelineResult(
             success=True,
@@ -62,7 +68,10 @@ def _run_in_process(mock: bool, weeks: int, count: int, send_email: bool) -> Pip
         )
     except Exception as e:
         logger.exception("Pipeline failed")
+        _pipeline_state["error"] = str(e)
         return PipelineResult(success=False, message=str(e), error=str(e))
+    finally:
+        _pipeline_state["running"] = False
 
 
 def _run_subprocess(mock: bool, weeks: int, count: int, send_email: bool) -> PipelineResult:
@@ -114,6 +123,8 @@ def _get_status() -> dict:
         "has_report": False,
         "report_path": None,
         "last_report_date": None,
+        "pipeline_running": _pipeline_state["running"],
+        "pipeline_error": _pipeline_state["error"],
     }
     try:
         if reviews_dir.exists():

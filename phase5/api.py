@@ -19,7 +19,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -73,17 +73,23 @@ async def api_status():
     return get_status()
 
 
+def _run_pipeline_task(mock: bool, weeks: int, count: int):
+    """Background task: runs pipeline (avoids Render 30s request timeout)."""
+    run_pipeline(mock=mock, weeks=weeks, count=count, send_email=False)
+
+
 @app.post("/api/run")
-async def api_run(req: RunRequest):
-    """Run full pipeline (Phase 1 -> 4)."""
-    result = run_pipeline(mock=req.mock, weeks=req.weeks, count=req.count)
-    if not result.success:
-        raise HTTPException(status_code=500, detail=result.error or result.message)
+async def api_run(req: RunRequest, background_tasks: BackgroundTasks):
+    """Run pipeline in background; returns immediately (Render has 30s timeout)."""
+    from phase5.pipeline import _pipeline_state
+    if _pipeline_state["running"]:
+        raise HTTPException(status_code=409, detail="Pipeline already running")
+    _pipeline_state["error"] = None
+    background_tasks.add_task(_run_pipeline_task, req.mock, req.weeks, req.count)
     return {
         "success": True,
-        "message": result.message,
-        "stats": result.stats,
-        "report_path": result.report_path,
+        "message": "Pipeline started. Poll /api/status for progress.",
+        "started": True,
     }
 
 
