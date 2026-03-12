@@ -35,8 +35,7 @@ from phase5.pipeline import (
 app = FastAPI(title="App Review Insights API", version="1.0")
 
 # CORS for Vercel frontend (and localhost for dev)
-_DEFAULT_ORIGINS = "http://localhost:8000,http://localhost:3000,https://app-review-insights-analyser.vercel.app"
-ALLOWED_ORIGINS = [x.strip() for x in os.environ.get("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",") if x.strip()]
+ALLOWED_ORIGINS = [x.strip() for x in os.environ.get("CORS_ORIGINS", "http://localhost:8000,http://localhost:3000").split(",") if x.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

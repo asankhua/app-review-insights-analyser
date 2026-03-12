@@ -21,8 +21,8 @@
    - `EMAIL_SENDER`
    - `EMAIL_PASSWORD`
    - `EMAIL_RECIPIENT`
-   - `CORS_ORIGINS` = `https://app-review-insights-analyser.vercel.app` (add after deploying frontend; use your actual Vercel URL)
-6. Deploy. **Backend URL:** `https://app-review-insights-analyser-production.up.railway.app`
+   - `CORS_ORIGINS` = `https://your-frontend.vercel.app` (add your Vercel URL)
+6. Deploy. Railway will give you a URL like `https://xxx.railway.app`
 
 ---
 
@@ -31,11 +31,10 @@
 ### Option A: Vercel (Recommended – no Docker)
 
 1. Go to [Vercel](https://vercel.com) and import your repo
-2. **Root Directory**: Leave as `.` (repo root) — `vercel.json` at root handles the build
-3. Add **Environment Variable** (optional — defaults to Railway URL):
-   - `API_URL` = `https://app-review-insights-analyser-production.up.railway.app`
+2. Set **Root Directory** to `frontend`
+3. Add **Environment Variable**:
+   - `API_URL` = `https://your-railway-app.railway.app` (your Railway backend URL, no trailing slash)
 4. Deploy. Vercel will run `npm run build` which injects the API URL into the frontend
-5. After deploy, copy your Vercel URL (e.g. `https://app-review-insights-analyser.vercel.app`) and add it to Railway's `CORS_ORIGINS`
 
 ### Option B: Frontend via Docker (e.g. Railway, Fly.io)
 
@@ -53,13 +52,13 @@ docker run -p 80:80 <image>
 
 ## 3. CORS Setup
 
-The backend must allow your frontend origin. In Railway → Variables, add:
+The backend must allow your frontend origin. In Railway, set:
 
 ```
-CORS_ORIGINS=https://app-review-insights-analyser.vercel.app
+CORS_ORIGINS=https://your-app.vercel.app,https://your-custom-domain.com
 ```
 
-Use your actual Vercel URL (from Vercel dashboard after deploy). Comma-separate for multiple: `https://app.vercel.app,https://custom.com`
+Comma-separate multiple origins. For local dev, `http://localhost:3000` is included by default.
 
 ---
 
