@@ -128,17 +128,28 @@ class EmailDeliveryService:
             raise
     
     def _get_latest_weekly_note_path(self) -> Optional[str]:
-        """Get path to latest weekly note file"""
+        """Get path to latest weekly note file. Falls back to sample_data when no report exists."""
         try:
             latest_note = self.note_service.get_latest_weekly_note_file()
             if latest_note:
-                # Return markdown file path
-                week_start = latest_note.weekStart.strftime('%Y-%m-%d')
-                return f"data/reports/pulse-{week_start}.md"
-            return None
+                path = f"data/reports/pulse-{latest_note.weekStart.strftime('%Y-%m-%d')}.md"
+                if Path(path).exists():
+                    return path
+            return self._get_report_fallback_path()
         except Exception as e:
             logger.error(f"Error getting latest weekly note: {str(e)}")
-            return None
+            return self._get_report_fallback_path()
+
+    def _get_report_fallback_path(self) -> Optional[str]:
+        """Fallback: check data/reports and sample_data for pulse-*.md (same as pipeline)."""
+        project_root = Path(__file__).parent.parent
+        for dir_name in ("data/reports", "sample_data"):
+            dir_path = project_root / dir_name
+            if dir_path.exists():
+                pulse_files = list(dir_path.glob("pulse-*.md"))
+                if pulse_files:
+                    return str(sorted(pulse_files)[-1])
+        return None
     
     def _load_weekly_note_content(self, weekly_note_path: str) -> str:
         """Load weekly note content from file"""
