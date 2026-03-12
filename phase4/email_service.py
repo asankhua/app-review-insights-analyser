@@ -1,6 +1,5 @@
 """
-Email service for Phase 4: SMTP (local) or Resend API (Render free tier).
-Resend works on Render because SMTP ports are blocked on free tier.
+SMTP Email service for Phase 4 Email Delivery
 """
 import smtplib
 import ssl
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmailService:
-    """Email service: Resend API (preferred on Render) or SMTP"""
+    """SMTP email service for sending emails"""
     
     def __init__(self):
         self.config = Config()
@@ -26,14 +25,11 @@ class EmailService:
         self.smtp_port = self.config.SMTP_PORT
         self.sender_email = self.config.EMAIL_SENDER
         self.sender_password = self.config.EMAIL_PASSWORD
-        self.resend_api_key = self.config.RESEND_API_KEY
         
-        if self.resend_api_key:
-            if not self.sender_email:
-                raise ValueError("EMAIL_SENDER required for Resend (used as From address)")
-            logger.info("Using Resend API for email (Render-friendly)")
-        elif not self.sender_email or not self.sender_password:
-            raise ValueError("EMAIL_SENDER and EMAIL_PASSWORD required, or set RESEND_API_KEY for Render")
+        if not self.sender_email:
+            raise ValueError("EMAIL_SENDER environment variable is required")
+        if not self.sender_password:
+            raise ValueError("EMAIL_PASSWORD environment variable is required")
     
     def send_email(
         self, 
@@ -55,8 +51,6 @@ class EmailService:
             
             if mode == "dry_run":
                 return self._create_draft(email_message)
-            elif self.resend_api_key:
-                return self._send_resend(email_message)
             else:
                 return self._send_smtp(email_message)
                 
@@ -64,39 +58,6 @@ class EmailService:
             logger.error(f"Email service failed: {str(e)}")
             raise
     
-    def _send_resend(self, email_message: EmailMessage) -> Dict[str, Any]:
-        """Send via Resend API (HTTPS; works on Render free tier)."""
-        try:
-            import resend
-            resend.api_key = self.resend_api_key
-            params = {
-                "from": self.sender_email,
-                "to": [email_message.to_email],
-                "subject": email_message.subject,
-                "html": email_message.html_body,
-            }
-            result = resend.Emails.send(params)
-            logger.info(f"Email sent via Resend to {email_message.to_email}")
-            return {
-                'status': EmailStatus.SENT,
-                'message_id': result.get('id', f"resend_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
-                'sent_at': datetime.now().isoformat(),
-                'processing_time': 0.5,
-                'recipient': email_message.to_email,
-                'subject': email_message.subject,
-            }
-        except Exception as e:
-            logger.error(f"Resend send failed: {str(e)}")
-            return {
-                'status': EmailStatus.FAILED,
-                'error_message': str(e),
-                'message_id': f"failed_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                'sent_at': None,
-                'processing_time': 0,
-                'recipient': email_message.to_email,
-                'subject': email_message.subject,
-            }
-
     def _send_smtp(self, email_message: EmailMessage) -> Dict[str, Any]:
         """Send email via SMTP"""
         try:
@@ -271,14 +232,11 @@ class EmailService:
     
     def get_configuration_info(self) -> Dict[str, Any]:
         """Get email service configuration"""
-        info = {
+        return {
             'smtp_host': self.smtp_host,
             'smtp_port': self.smtp_port,
             'sender_email': self.sender_email,
             'sender_configured': bool(self.sender_email),
             'password_configured': bool(self.sender_password),
-            'resend_configured': bool(self.resend_api_key),
+            'connection_test': self.test_connection()
         }
-        if not self.resend_api_key:
-            info['connection_test'] = self.test_connection()
-        return info
