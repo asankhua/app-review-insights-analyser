@@ -38,7 +38,7 @@
 ### Option A: Vercel (Recommended)
 
 1. Go to [Vercel](https://vercel.com) and import your repo
-2. **Root Directory**: Set to `frontend` (or leave `.` — root `vercel.json` handles the build)
+2. **Root Directory**: Set to `frontend` (recommended — avoids Python auto-detection). If using repo root, `vercel.json` sets `installCommand` to build the frontend.
 3. Add **Environment Variable**:
    - `API_URL` = `https://app-review-insights-analyser.onrender.com` (optional; this is the default)
 4. Deploy. Vercel runs `npm run build` which injects the API URL into the frontend
