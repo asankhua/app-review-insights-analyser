@@ -45,6 +45,7 @@ class EmailDeliveryService:
     def deliver_weekly_note(
         self,
         weekly_note_path: Optional[str] = None,
+        weekly_note_content: Optional[str] = None,
         recipient_email: Optional[str] = None,
         recipient_name: Optional[str] = None,
         mode: EmailMode = EmailMode.DRY_RUN,
@@ -56,6 +57,7 @@ class EmailDeliveryService:
         
         Args:
             weekly_note_path: Path to weekly note file (auto-detect if None)
+            weekly_note_content: Raw report content (e.g. from Gist). When set, overrides path.
             recipient_email: Override recipient email
             recipient_name: Recipient name for greeting
             mode: Email delivery mode (dry_run or send)
@@ -69,14 +71,15 @@ class EmailDeliveryService:
             logger.info(f"Starting email delivery: mode={mode}")
             start_time = time.time()
             
-            # Get weekly note content
-            if not weekly_note_path:
-                weekly_note_path = self._get_latest_weekly_note_path()
-            
-            if not weekly_note_path or not Path(weekly_note_path).exists():
-                raise ValueError("No weekly note file found. Run Phase 3 first.")
-            
-            weekly_note_content = self._load_weekly_note_content(weekly_note_path)
+            # Prefer content (from Gist) over path (files)
+            if not weekly_note_content:
+                if not weekly_note_path:
+                    weekly_note_path = self._get_latest_weekly_note_path()
+                if not weekly_note_path or not Path(weekly_note_path).exists():
+                    raise ValueError("No weekly note file found. Run Phase 3 first.")
+                weekly_note_content = self._load_weekly_note_content(weekly_note_path)
+            else:
+                weekly_note_path = ""  # No file path when content from Gist; skip attachments
             
             # Determine recipient
             recipient = recipient_email or self.config.EMAIL_RECIPIENT or "team@indmoney.com"
@@ -239,7 +242,8 @@ class EmailDeliveryService:
     def _create_attachments(self, weekly_note_path: str) -> List[EmailAttachment]:
         """Create email attachments"""
         attachments = []
-        
+        if not weekly_note_path or not weekly_note_path.strip():
+            return attachments
         try:
             # Attach the weekly note file
             path = Path(weekly_note_path)

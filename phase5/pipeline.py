@@ -364,6 +364,7 @@ def _get_latest_report_path() -> Optional[str]:
 def send_email(recipient: Optional[str] = None) -> dict:
     """
     Send latest weekly report via email.
+    Uses same source as View Report (Gist when REPORT_GIST_ID set, else files).
     Returns dict with status, message_id, error.
     """
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -372,8 +373,10 @@ def send_email(recipient: Optional[str] = None) -> dict:
         from phase4.email_delivery import EmailDeliveryService
         from phase4.models.email import EmailMode
 
+        content = get_latest_report()
         svc = EmailDeliveryService()
         response = svc.deliver_weekly_note(
+            weekly_note_content=content,
             recipient_email=recipient,
             mode=EmailMode.SEND,
         )
