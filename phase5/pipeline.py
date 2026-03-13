@@ -152,7 +152,12 @@ def _save_sync_upload(report_content: str, report_date: str, last_run: Optional[
 
 def _fetch_from_gist() -> Optional[dict]:
     """Fetch report and metadata from GitHub Gist. Cached 60s. Returns {content, last_run, report_date} or None."""
-    gist_id = os.environ.get("REPORT_GIST_ID", "").strip()
+    raw = os.environ.get("REPORT_GIST_ID", "").strip()
+    # Allow full URL or just the ID
+    if "/" in raw:
+        gist_id = raw.rstrip("/").split("/")[-1]
+    else:
+        gist_id = raw
     if not gist_id:
         return None
     now = time.time()
@@ -160,12 +165,19 @@ def _fetch_from_gist() -> Optional[dict]:
         return _gist_cache
     try:
         import urllib.request
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "App-Review-Insights/1.0",
+        }
+        token = os.environ.get("GH_GIST_TOKEN", "").strip()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         req = urllib.request.Request(
             f"https://api.github.com/gists/{gist_id}",
-            headers={"Accept": "application/vnd.github+json"},
+            headers=headers,
             method="GET",
         )
-        with urllib.request.urlopen(req, timeout=10) as r:
+        with urllib.request.urlopen(req, timeout=15) as r:
             data = json.loads(r.read().decode())
         files = data.get("files", {})
         pulse = files.get("pulse.md") or files.get("pulse")

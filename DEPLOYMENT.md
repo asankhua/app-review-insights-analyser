@@ -117,8 +117,9 @@ Render's free tier has ephemeral storage—uploaded reports are lost on restart.
 2. Run workflow (Actions → Weekly Pulse → Run workflow)
 3. In the log, find `REPORT_GIST_ID = abc123...`
 4. Add to **GitHub Secrets**: `REPORT_GIST_ID` = that value
-5. Add to **Render** env: `REPORT_GIST_ID` = same value
-6. View Report will show the synced report
+5. Add to **Render** env: `REPORT_GIST_ID` = Gist ID only (e.g. `abc123def456`, not the full URL)
+6. (Optional) Add `GH_GIST_TOKEN` to Render too—improves fetch reliability
+7. View Report will show the synced report
 
 **Option B: Create Gist manually** – [gist.github.com](https://gist.github.com) → New gist → add `pulse.md` and `meta.json` → Create. Copy Gist ID. Add `REPORT_GIST_ID` to GitHub Secrets and Render (still need `GH_GIST_TOKEN` for uploads).
 
