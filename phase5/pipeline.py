@@ -169,8 +169,13 @@ def _fetch_from_gist() -> Optional[dict]:
             data = json.loads(r.read().decode())
         files = data.get("files", {})
         pulse = files.get("pulse.md") or files.get("pulse")
+        if not pulse:
+            for k, v in files.items():
+                if v and (k.endswith(".md") or k == "pulse"):
+                    pulse = v
+                    break
         meta_file = files.get("meta.json") or files.get("meta")
-        content = pulse.get("content", "").strip() if pulse else ""
+        content = (pulse.get("content") or "").strip() if pulse else ""
         meta = {}
         if meta_file:
             try:
@@ -185,8 +190,9 @@ def _fetch_from_gist() -> Optional[dict]:
                 "report_date": report_date, "has_report": True,
             })
             return _gist_cache
+        logger.warning("Gist %s has no pulse.md content", gist_id)
     except Exception as e:
-        logger.debug("Gist fetch failed: %s", e)
+        logger.warning("Gist fetch failed (id=%s): %s", gist_id, e)
     return None
 
 

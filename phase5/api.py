@@ -112,8 +112,10 @@ async def api_report():
     if content is None:
         status = get_status()
         detail = "No report found. Run pipeline first."
-        if status.get("last_run"):
-            detail = "Report from last sync unavailable. Enable persistent disk on Render."
+        if not os.environ.get("REPORT_GIST_ID"):
+            detail = "Add REPORT_GIST_ID to Render env (Gist ID from workflow log). See DEPLOYMENT.md §7."
+        elif status.get("last_run"):
+            detail = "Report from last sync unavailable. Check Gist has pulse.md."
         raise HTTPException(status_code=404, detail=detail)
     return {"content": content}
 
