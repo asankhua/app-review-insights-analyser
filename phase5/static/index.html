@@ -568,18 +568,30 @@
       setLoading(true);
       hideMessage();
       try {
-        const r = await fetch(API + '/api/report');
-        if (!r.ok) {
-          const err = await r.json().catch(() => ({}));
+        const [reportRes, statusRes] = await Promise.all([
+          fetch(API + '/api/report'),
+          fetch(API + '/api/status'),
+        ]);
+        if (!reportRes.ok) {
+          const err = await reportRes.json().catch(() => ({}));
           const msg = err.detail || 'No report yet. Run the pipeline with "Use previous synced data" checked first.';
           showMessage(msg, 'info');
           reportCard.style.display = 'none';
           return;
         }
-        const d = await r.json();
+        const status = await statusRes.json().catch(() => ({}));
+        const lastSynced = status.last_synced || status.last_scraped;
+        const lastRun = status.last_run;
+        const syncedToday = lastSynced && isTodayIST(lastSynced);
+        const schedulerToday = lastRun && isTodayIST(lastRun);
+        if (syncedToday || schedulerToday) {
+          showMessage('Scheduler/Pipeline already ran today. No need to run the pipeline again.', 'info');
+        } else {
+          hideMessage();
+        }
+        const d = await reportRes.json();
         reportContent.textContent = d.content || '';
         reportCard.style.display = 'block';
-        hideMessage();
       } catch (e) {
         showMessage(e.message || 'Failed to load report', 'error');
       } finally {
