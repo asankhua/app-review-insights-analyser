@@ -326,7 +326,7 @@ def get_email_preview() -> Optional[dict]:
         if len(content.strip()) > 250:
             snippet += "..."
         safe = re.sub(r"[^\w\s-]", "", week_date).strip().replace(" ", "_")[:40]
-        attach_filename = f"INDMoney_Weekly_Pulse_{safe}.md"
+        attach_filename = f"INDMoney_Weekly_Pulse_{safe}.docx"
 
         weekly_note_html = format_markdown_to_html(content)
         html_body = HTML_TEMPLATE.format(

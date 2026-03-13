@@ -198,8 +198,12 @@ class EmailDeliveryService:
             if len(weekly_note_content.strip()) > 250:
                 note_snippet += "..."
             
-            # Attach filename (from path or derived from week_date)
-            attach_filename = Path(weekly_note_path).name if weekly_note_path and Path(weekly_note_path).exists() else self._make_attachment_filename(week_date)
+            # Attach filename (always .docx)
+            attach_filename = (
+                Path(weekly_note_path).stem + ".docx"
+                if weekly_note_path and Path(weekly_note_path).exists() and weekly_note_path.endswith(".md")
+                else self._make_attachment_filename(week_date)
+            )
             
             # Generate email body (strip # headers to avoid duplicates)
             note_text = strip_markdown_headers(weekly_note_content)
@@ -246,9 +250,42 @@ class EmailDeliveryService:
             raise
     
     def _make_attachment_filename(self, week_date: str) -> str:
-        """Create attachment filename from week date, e.g. INDMoney_Weekly_Pulse_March09-Mar15.md"""
+        """Create attachment filename from week date, e.g. INDMoney_Weekly_Pulse_March09-Mar15.docx"""
         safe = re.sub(r"[^\w\s-]", "", week_date).strip().replace(" ", "_")[:40]
-        return f"INDMoney_Weekly_Pulse_{safe}.md"
+        return f"INDMoney_Weekly_Pulse_{safe}.docx"
+
+    def _markdown_to_docx(self, content: str) -> bytes:
+        """Convert markdown content to Word .docx bytes."""
+        try:
+            from docx import Document
+            doc = Document()
+            for line in content.split("\n"):
+                line = line.rstrip()
+                if not line:
+                    continue
+                if line.startswith("## "):
+                    doc.add_heading(line[3:].strip(), level=0)
+                elif line.startswith("### "):
+                    doc.add_heading(line[4:].strip(), level=1)
+                elif line.startswith("- ") or line.startswith("* "):
+                    p = doc.add_paragraph(line[2:].strip(), style="List Bullet")
+                elif line.strip().startswith("Action ") and ":" in line:
+                    doc.add_paragraph(line.strip())
+                else:
+                    doc.add_paragraph(line.strip())
+            import io
+            buf = io.BytesIO()
+            doc.save(buf)
+            return buf.getvalue()
+        except Exception as e:
+            logger.warning("Markdown to DOCX failed, falling back to plain text: %s", e)
+            from docx import Document
+            doc = Document()
+            doc.add_paragraph(content)
+            import io
+            buf = io.BytesIO()
+            doc.save(buf)
+            return buf.getvalue()
 
     def _extract_week_date(self, content: str) -> str:
         """Extract week date range from weekly note content (e.g. 'March 2 - March 8')"""
@@ -273,39 +310,28 @@ class EmailDeliveryService:
         """Create email attachments from file path or from content (e.g. Gist)."""
         attachments = []
         try:
-            # From file path
+            # From file path: convert .md to .docx
             if weekly_note_path and weekly_note_path.strip():
                 path = Path(weekly_note_path)
-                if path.exists():
-                    content = path.read_bytes()
-                    filename = path.name
+                if path.exists() and path.suffix.lower() == ".md":
+                    md_text = path.read_text(encoding="utf-8")
+                    docx_bytes = self._markdown_to_docx(md_text)
+                    filename = path.stem + ".docx"
                     attachment = EmailAttachment(
                         filename=filename,
-                        content=content,
-                        content_type='text/markdown' if filename.endswith('.md') else 'application/json',
-                        size=len(content)
+                        content=docx_bytes,
+                        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        size=len(docx_bytes),
                     )
                     attachments.append(attachment)
-                    if weekly_note_path.endswith('.md'):
-                        week_date = path.stem.replace('pulse-', '')
-                        json_path = path.parent / f"weekly_pulse-{week_date}.json"
-                        if json_path.exists():
-                            content = json_path.read_bytes()
-                            attachment = EmailAttachment(
-                                filename=json_path.name,
-                                content=content,
-                                content_type='application/json',
-                                size=len(content)
-                            )
-                            attachments.append(attachment)
-            # From content (e.g. Gist) when no file path
+            # From content (e.g. Gist): convert to .docx
             elif weekly_note_content and attach_filename:
-                content_bytes = weekly_note_content.encode("utf-8")
+                docx_bytes = self._markdown_to_docx(weekly_note_content)
                 attachment = EmailAttachment(
                     filename=attach_filename,
-                    content=content_bytes,
-                    content_type="text/markdown",
-                    size=len(content_bytes),
+                    content=docx_bytes,
+                    content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    size=len(docx_bytes),
                 )
                 attachments.append(attachment)
         except Exception as e:
