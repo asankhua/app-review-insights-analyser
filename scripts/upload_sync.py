@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Upload report to Render and/or GitHub Gist after scheduler run.
 - Render: requires RENDER_URL, REPORT_UPLOAD_SECRET (ephemeral on free tier)
-- Gist: requires REPORT_GIST_ID, GITHUB_TOKEN (persistent, free). Use this for View Report on Render free tier.
+- Gist: requires GH_GIST_TOKEN (PAT with gist scope). REPORT_GIST_ID optional (auto-created if not set).
+  GITHUB_TOKEN cannot create Gists—use a PAT: Settings → Developer settings → Tokens → Generate (classic), enable 'gist'.
 """
 import json
 import os
@@ -10,8 +11,9 @@ from pathlib import Path
 
 
 def upload_to_gist(content: str, report_date: str, last_run: str | None) -> bool:
-    """Create or update a GitHub Gist with report and metadata. Auto-creates on first run if no REPORT_GIST_ID."""
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    """Create or update a GitHub Gist with report and metadata. Auto-creates on first run if no REPORT_GIST_ID.
+    Requires GH_GIST_TOKEN (PAT with gist scope)—GITHUB_TOKEN cannot create Gists."""
+    token = os.environ.get("GH_GIST_TOKEN", os.environ.get("GITHUB_TOKEN", "")).strip()
     if not token:
         return False
     gist_id = os.environ.get("REPORT_GIST_ID", "").strip()
@@ -119,9 +121,8 @@ def main():
     )
 
     if not gist_ok and not render_ok:
-        # At least one must succeed for scheduler flow; Gist is preferred for free tier
-        if os.environ.get("REPORT_GIST_ID"):
-            print("Gist upload failed. Ensure REPORT_GIST_ID and GITHUB_TOKEN are set.", file=sys.stderr)
+        print("Upload failed. For Gist: add GH_GIST_TOKEN (PAT with gist scope) to GitHub Secrets.", file=sys.stderr)
+        print("Create at: GitHub Settings → Developer settings → Personal access tokens → gist", file=sys.stderr)
         sys.exit(1)
 
 

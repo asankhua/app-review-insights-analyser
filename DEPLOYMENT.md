@@ -105,15 +105,22 @@ Set `CORS_ORIGINS` to include `http://localhost:3000` when testing the split set
 
 Render's free tier has ephemeral storage—uploaded reports are lost on restart. Use a **GitHub Gist** for persistent storage (free, no upgrade).
 
-**Option A: Auto-create (recommended)** – No manual setup. Run the workflow (trigger Weekly Pulse manually). The first run creates a Gist and prints the ID. Add it to GitHub Secrets and Render env:
+**Requirement:** `GITHUB_TOKEN` cannot create Gists. Create a **Personal Access Token (PAT)** with `gist` scope:
 
-1. Run the workflow (Actions → Weekly Pulse → Run workflow)
-2. In the workflow log, find the line `REPORT_GIST_ID = abc123...`
-3. Add to **GitHub Secrets**: `REPORT_GIST_ID` = that value
-4. Add to **Render** Environment Variables: `REPORT_GIST_ID` = same value
-5. On the next run, View Report will show the synced report
+1. GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
+2. **Generate new token** → enable **gist** → Generate
+3. Add to **GitHub Secrets**: `GH_GIST_TOKEN` = your PAT
 
-**Option B: Create Gist manually** – Go to [gist.github.com](https://gist.github.com) → New gist → add `pulse.md` (`# placeholder`) and `meta.json` (`{}`) → Create. Copy the Gist ID from the URL. Add `REPORT_GIST_ID` to GitHub Secrets and Render.
+**Option A: Auto-create** – Run the workflow. The first run creates a Gist and prints the ID:
+
+1. Add `GH_GIST_TOKEN` to GitHub Secrets (see above)
+2. Run workflow (Actions → Weekly Pulse → Run workflow)
+3. In the log, find `REPORT_GIST_ID = abc123...`
+4. Add to **GitHub Secrets**: `REPORT_GIST_ID` = that value
+5. Add to **Render** env: `REPORT_GIST_ID` = same value
+6. View Report will show the synced report
+
+**Option B: Create Gist manually** – [gist.github.com](https://gist.github.com) → New gist → add `pulse.md` and `meta.json` → Create. Copy Gist ID. Add `REPORT_GIST_ID` to GitHub Secrets and Render (still need `GH_GIST_TOKEN` for uploads).
 
 ---
 
