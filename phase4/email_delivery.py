@@ -3,6 +3,7 @@ Phase 4 Email Delivery Service
 """
 import json
 import logging
+import re
 import time
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
@@ -79,20 +80,21 @@ class EmailDeliveryService:
                     raise ValueError("No weekly note file found. Run Phase 3 first.")
                 weekly_note_content = self._load_weekly_note_content(weekly_note_path)
             else:
-                weekly_note_path = ""  # No file path when content from Gist; skip attachments
+                weekly_note_path = ""  # No file path when content from Gist
             
             # Determine recipient
             recipient = recipient_email or self.config.EMAIL_RECIPIENT or "team@indmoney.com"
             recipient_display_name = recipient_name or "Team"
             
-            # Generate email content
+            # Generate email content (pass content for attachment when path empty, e.g. from Gist)
             email_message = self._create_email_message(
                 weekly_note_content=weekly_note_content,
                 recipient_email=recipient,
                 recipient_name=recipient_display_name,
                 custom_subject=custom_subject,
                 include_attachments=include_attachments,
-                weekly_note_path=weekly_note_path
+                weekly_note_path=weekly_note_path,
+                weekly_note_content_for_attach=weekly_note_content if not weekly_note_path else None,
             )
             
             # Send email
@@ -110,10 +112,11 @@ class EmailDeliveryService:
                 processing_time=time.time() - start_time
             )
             
-            # Save delivery record
+            # Save delivery record (use placeholder path when content from Gist, for model validation)
+            record_path = weekly_note_path or "INDMoney_Weekly_Pulse.md"
             self._save_delivery_record(
                 request=EmailDeliveryRequest(
-                    weekly_note_path=weekly_note_path,
+                    weekly_note_path=record_path,
                     recipient_email=recipient_email,
                     recipient_name=recipient_name,
                     mode=mode,
@@ -179,7 +182,8 @@ class EmailDeliveryService:
         recipient_name: str,
         custom_subject: Optional[str],
         include_attachments: bool,
-        weekly_note_path: str
+        weekly_note_path: str,
+        weekly_note_content_for_attach: Optional[str] = None,
     ) -> EmailMessage:
         """Create email message with formatted content"""
         try:
@@ -189,13 +193,23 @@ class EmailDeliveryService:
             # Create email subject
             subject = custom_subject or f"INDMoney Weekly Review Pulse -- {week_date}"
             
+            # Snippet for appended doc (first ~200 chars)
+            note_snippet = weekly_note_content.strip()[:250].replace("\n", " ").strip()
+            if len(weekly_note_content.strip()) > 250:
+                note_snippet += "..."
+            
+            # Attach filename (from path or derived from week_date)
+            attach_filename = Path(weekly_note_path).name if weekly_note_path and Path(weekly_note_path).exists() else self._make_attachment_filename(week_date)
+            
             # Generate email body (strip # headers to avoid duplicates)
             note_text = strip_markdown_headers(weekly_note_content)
             text_body = PLAIN_TEXT_TEMPLATE.format(
                 recipient_name=recipient_name,
                 week_date=week_date,
                 weekly_note_text=note_text,
-                generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                appended_snippet=note_snippet,
+                appended_filename=attach_filename,
             )
             
             # Convert markdown to HTML (headers stripped inside)
@@ -204,13 +218,19 @@ class EmailDeliveryService:
                 recipient_name=recipient_name,
                 week_date=week_date,
                 weekly_note_html=weekly_note_html,
-                generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                appended_snippet=note_snippet,
+                appended_filename=attach_filename,
             )
             
-            # Create attachments
+            # Create attachments (from file path or from content when path empty)
             attachments = []
             if include_attachments:
-                attachments = self._create_attachments(weekly_note_path)
+                attachments = self._create_attachments(
+                    weekly_note_path,
+                    weekly_note_content_for_attach,
+                    attach_filename,
+                )
             
             return EmailMessage(
                 subject=subject,
@@ -225,6 +245,11 @@ class EmailDeliveryService:
             logger.error(f"Error creating email message: {str(e)}")
             raise
     
+    def _make_attachment_filename(self, week_date: str) -> str:
+        """Create attachment filename from week date, e.g. INDMoney_Weekly_Pulse_March09-Mar15.md"""
+        safe = re.sub(r"[^\w\s-]", "", week_date).strip().replace(" ", "_")[:40]
+        return f"INDMoney_Weekly_Pulse_{safe}.md"
+
     def _extract_week_date(self, content: str) -> str:
         """Extract week date range from weekly note content (e.g. 'March 2 - March 8')"""
         try:
@@ -239,43 +264,52 @@ class EmailDeliveryService:
         except Exception:
             return "Unknown"
     
-    def _create_attachments(self, weekly_note_path: str) -> List[EmailAttachment]:
-        """Create email attachments"""
+    def _create_attachments(
+        self,
+        weekly_note_path: str,
+        weekly_note_content: Optional[str] = None,
+        attach_filename: Optional[str] = None,
+    ) -> List[EmailAttachment]:
+        """Create email attachments from file path or from content (e.g. Gist)."""
         attachments = []
-        if not weekly_note_path or not weekly_note_path.strip():
-            return attachments
         try:
-            # Attach the weekly note file
-            path = Path(weekly_note_path)
-            if path.exists():
-                content = path.read_bytes()
-                filename = path.name
-                
-                attachment = EmailAttachment(
-                    filename=filename,
-                    content=content,
-                    content_type='text/markdown' if filename.endswith('.md') else 'application/json',
-                    size=len(content)
-                )
-                attachments.append(attachment)
-            
-            # Also attach JSON version if we have markdown
-            if weekly_note_path.endswith('.md'):
-                week_date = path.stem.replace('pulse-', '')
-                json_path = path.parent / f"weekly_pulse-{week_date}.json"
-                if json_path.exists():
-                    content = json_path.read_bytes()
+            # From file path
+            if weekly_note_path and weekly_note_path.strip():
+                path = Path(weekly_note_path)
+                if path.exists():
+                    content = path.read_bytes()
+                    filename = path.name
                     attachment = EmailAttachment(
-                        filename=json_path.name,
+                        filename=filename,
                         content=content,
-                        content_type='application/json',
+                        content_type='text/markdown' if filename.endswith('.md') else 'application/json',
                         size=len(content)
                     )
                     attachments.append(attachment)
-            
+                    if weekly_note_path.endswith('.md'):
+                        week_date = path.stem.replace('pulse-', '')
+                        json_path = path.parent / f"weekly_pulse-{week_date}.json"
+                        if json_path.exists():
+                            content = json_path.read_bytes()
+                            attachment = EmailAttachment(
+                                filename=json_path.name,
+                                content=content,
+                                content_type='application/json',
+                                size=len(content)
+                            )
+                            attachments.append(attachment)
+            # From content (e.g. Gist) when no file path
+            elif weekly_note_content and attach_filename:
+                content_bytes = weekly_note_content.encode("utf-8")
+                attachment = EmailAttachment(
+                    filename=attach_filename,
+                    content=content_bytes,
+                    content_type="text/markdown",
+                    size=len(content_bytes),
+                )
+                attachments.append(attachment)
         except Exception as e:
             logger.error(f"Error creating attachments: {str(e)}")
-        
         return attachments
     
     def _save_delivery_record(
