@@ -1,12 +1,17 @@
 # Render Blueprint - Backend API (Docker)
 # Deploy: Connect GitHub repo at https://dashboard.render.com
-# Add secrets (GROQ_API_KEY, GEMINI_API_KEY, etc.) in Dashboard → Environment
+# Add secrets (GROQ_API_KEY, GEMINI_API_KEY, REPORT_UPLOAD_SECRET, etc.) in Dashboard → Environment
+# Persistent disk required so scheduler-uploaded reports survive redeploys (paid plan)
 
 services:
   - type: web
     runtime: docker
     name: app-review-insights-api
     dockerfilePath: ./Dockerfile
+    disk:
+      name: app-data
+      mountPath: /app/data
+      sizeGB: 1
     envVars:
       - key: GROQ_API_KEY
         sync: false
@@ -20,3 +25,5 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false  # e.g. https://app-review-insights-analyser.vercel.app
+      - key: REPORT_UPLOAD_SECRET
+        sync: false

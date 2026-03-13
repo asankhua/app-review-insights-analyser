@@ -19,4 +19,5 @@ RUN python scripts/seed_sample_data.py && \
 EXPOSE 8000
 
 # Render injects PORT at runtime; default to 8000 for local
-CMD sh -c 'uvicorn phase5.api:app --host 0.0.0.0 --port ${PORT:-8000}'
+# Init: when persistent disk has no reports, seed sample (scheduler upload replaces this)
+CMD sh -c 'mkdir -p data/reports data/reviews data/logs && (find data/reports -maxdepth 1 -name "pulse-*.md" 2>/dev/null | grep -q . || (python scripts/seed_sample_data.py && cp sample_data/pulse-2025-01-01.md data/reports/)); uvicorn phase5.api:app --host 0.0.0.0 --port ${PORT:-8000}'
