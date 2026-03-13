@@ -193,12 +193,6 @@ class EmailDeliveryService:
             # Create email subject
             subject = custom_subject or f"INDMoney Weekly Review Pulse -- {week_date}"
             
-            # Snippet for appended doc (first ~200 chars, strip markdown for display)
-            raw_snippet = strip_markdown_headers(weekly_note_content).strip()[:250].replace("\n", " ")
-            note_snippet = re.sub(r"\s+", " ", raw_snippet).strip()
-            if len(strip_markdown_headers(weekly_note_content).strip()) > 250:
-                note_snippet += "..."
-            
             # Attach filename (always .docx)
             attach_filename = (
                 Path(weekly_note_path).stem + ".docx"
@@ -219,8 +213,6 @@ class EmailDeliveryService:
                 week_date=week_date,
                 weekly_note_text=note_text,
                 generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                appended_snippet=note_snippet,
-                appended_filename=attach_filename,
             )
             
             # Convert markdown to HTML (headers stripped inside)
@@ -230,8 +222,6 @@ class EmailDeliveryService:
                 week_date=week_date,
                 weekly_note_html=weekly_note_html,
                 generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                appended_snippet=note_snippet,
-                appended_filename=attach_filename,
             )
             
             # Create attachments (from file path or docx bytes)

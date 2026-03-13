@@ -126,12 +126,7 @@ HTML_TEMPLATE = """
     <div class="content">
         {weekly_note_html}
     </div>
-        <div class="attached-snippet">
-            <h3 style="color:#2c3e50; font-size:14px; margin-bottom:8px;">📎 Weekly Note (DOCX attached)</h3>
-            <p style="background:#f1f3f5; padding:12px; border-radius:6px; font-size:13px; color:#495057;">{appended_filename}</p>
-            <p style="font-size:12px; color:#6c757d; margin-top:8px;">Snippet: {appended_snippet}</p>
-        </div>
-        <div class="footer">
+    <div class="footer">
         <p>Best regards,<br>INDMoney Insights Team</p>
         <p><small>This automated report was generated on {generated_date}</small></p>
     </div>
@@ -147,10 +142,6 @@ INDMONEY WEEKLY REVIEW PULSE -- {week_date}
 
 {weekly_note_text}
 
---------------------------------------------------
-📎 Appended: Weekly Note DOCX ({appended_filename})
-Snippet: {appended_snippet}
---------------------------------------------------
 Best regards,
 INDMoney Insights Team
 
