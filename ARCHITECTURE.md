@@ -4,6 +4,32 @@
 
 Transform App Store/Play Store reviews into actionable weekly insights for product, growth, support, and leadership teams.
 
+## Deployment & URLs
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend (Vercel)** | https://app-review-insights-analyser.vercel.app | Web UI (Run Pipeline, View Report, Send Email) |
+| **Backend (Render)** | https://app-review-insights-analyser.onrender.com | FastAPI REST API (Docker) |
+| **API Base** | https://app-review-insights-analyser.onrender.com/api | REST endpoints (status, run, report, email) |
+| **Resend** | https://resend.com | Email delivery (API, used on Render free tier) |
+| **GitHub Gist** | https://gist.github.com | Report storage for View Report on Render free tier (no persistent disk) |
+| **GitHub Actions** | .github/workflows/weekly-pulse.yml | Scheduler: Sunday 9:00 AM IST |
+
+**Local:** http://localhost:8000 (Web UI + API via `python run_web.py`)
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | Python 3.10/3.11, FastAPI, Uvicorn |
+| **Frontend** | Static HTML/CSS/JS, vanilla JS (no framework) |
+| **AI/LLM** | Groq (theme discovery, classification), Google Gemini (weekly note generation) |
+| **Email** | Resend API (Render) or SMTP (local) |
+| **Scraping** | google-play-scraper |
+| **Hosting** | Render.com (backend), Vercel (frontend) |
+| **Scheduler** | GitHub Actions (cron: Sunday 9:00 AM IST) |
+| **Report Storage** | GitHub Gist (persistent, free; Render free tier has ephemeral disk) |
+
 ### Problem Statement
 Turn recent App Store/ Play Store reviews into a one-page weekly pulse containing:
 - Top themes
@@ -89,10 +115,11 @@ The codebase is organized into separate phases for better maintainability and mo
 #### Phase 5 Minimal UI Specification
 - **One page only** — no multi-page navigation
 - **Essential buttons only**:
-  1. **Run Pipeline** — Triggers full pipeline (scrape → themes → classify → note → draft)
-  2. **View Report** — Display latest weekly pulse
-  3. **Send Email** — Send latest report to configured recipient
-- **Status panel** — Reviews count, themes count, last run time (read-only)
+  1. **Run Pipeline** — Triggers full pipeline (scrape → themes → classify → note → draft). Blocked if scheduler ran today (IST).
+  2. **View Report** — Display latest weekly pulse from Gist or local data. Shows "Scheduler/Pipeline already ran today" when sync date is today.
+  3. **Send Email** — Send latest report via Resend (deployed) or SMTP (local)
+- **Checkbox:** "Use previous synced data" — run with mock data; View Report fetches from Gist when checked
+- **Status panel** — Reviews, Themes, Scheduler Run, Synced Pipeline, Last Email Sent (all timestamps in IST)
 - **Report preview** — Rendered markdown in a simple card
 - **No** analytics, scheduling, or config UI (use CLI / .env)
 
@@ -874,11 +901,22 @@ INDMONEY_APP_NAME=INDMoney
 python main.py --phase run --skip-email --weeks 8 --count 100
 ```
 
-### Required Secrets
-- `GROQ_API_KEY`: Phase 2 (theme discovery)
-- `GEMINI_API_KEY`: Phase 3 (weekly note generation)
-- `RENDER_URL`: Backend URL (e.g. `https://app-review-insights-analyser.onrender.com`) for upload
-- `REPORT_UPLOAD_SECRET`: Must match Render's `REPORT_UPLOAD_SECRET` for report upload
+### Required Secrets (GitHub → Settings → Secrets → Actions)
+| Secret | Purpose |
+|--------|---------|
+| `GROQ_API_KEY` | Phase 2 (theme discovery, classification) |
+| `GEMINI_API_KEY` | Phase 3 (weekly note generation) |
+| `GH_GIST_TOKEN` | PAT with `gist` scope — uploads report to Gist (GITHUB_TOKEN cannot create Gists) |
+| `REPORT_GIST_ID` | Gist ID for report storage (auto-created on first run, then add to secrets) |
+| `RENDER_URL` | Backend URL for optional upload (e.g. `https://app-review-insights-analyser.onrender.com`) |
+| `REPORT_UPLOAD_SECRET` | Must match Render's env (optional; Gist is primary on free tier) |
+
+### Gist Storage (View Report on Render Free Tier)
+- Render free tier has **ephemeral storage** — uploads are lost on restart
+- **GitHub Gist** stores the report persistently (free)
+- After scheduler run: `scripts/upload_sync.py` uploads `pulse.md` + `meta.json` to Gist
+- Backend fetches from Gist when `REPORT_GIST_ID` is set in Render env
+- See [DEPLOYMENT.md](DEPLOYMENT.md) §7 for setup
 
 ## Web UI as Trigger
 

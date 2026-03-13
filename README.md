@@ -30,21 +30,37 @@ The goal is to simulate how Product and Support teams use AI to generate structu
 
 ## URLs
 
-| Environment | URL | Description |
-|-------------|-----|-------------|
-| **Local Web UI** | http://localhost:8000 | Single-page Web UI (Run Pipeline, View Report, Send Email) |
-| **Local API Base** | http://localhost:8000/api | REST API base for status, run, report, email |
-| **Live (deployment)** | *Add your deployed URL here* | Deploy to Railway, Render, Fly.io, or any Python host |
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend (Vercel)** | https://app-review-insights-analyser.vercel.app | Web UI (Run Pipeline, View Report, Send Email) |
+| **Backend (Render)** | https://app-review-insights-analyser.onrender.com | FastAPI REST API |
+| **Local Web UI** | http://localhost:8000 | Single-page Web UI (`python run_web.py`) |
+| **Resend** | https://resend.com | Email API (used on Render free tier; SMTP blocked) |
+| **GitHub Gist** | https://gist.github.com | Report storage for View Report on Render free tier |
 
-### API Endpoints (localhost)
+### API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | http://localhost:8000/ | Web UI (HTML) |
-| `GET` | http://localhost:8000/api/status | Pipeline status (reviews, themes, report, last synced) |
-| `POST` | http://localhost:8000/api/run | Run full pipeline (Phases 1–4) |
-| `GET` | http://localhost:8000/api/report | Latest weekly pulse (markdown) |
-| `POST` | http://localhost:8000/api/email/send | Send latest report via email |
+| `GET` | / | Web UI (HTML) |
+| `GET` | /api/status | Pipeline status (reviews, themes, last run, last synced) |
+| `POST` | /api/run | Run full pipeline (Phases 1–4) |
+| `GET` | /api/report | Latest weekly pulse (markdown; from Gist when REPORT_GIST_ID set) |
+| `POST` | /api/email/send | Send latest report via Resend/SMTP |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | Python 3.10+, FastAPI, Uvicorn |
+| **Frontend** | Static HTML/CSS/JS (vanilla) |
+| **AI/LLM** | Groq (themes, classification), Google Gemini (weekly note) |
+| **Email** | Resend API (Render) or SMTP (local) |
+| **Hosting** | Render.com (backend), Vercel (frontend) |
+| **Scheduler** | GitHub Actions — Sunday **9:00 AM IST** |
+| **Report Storage** | GitHub Gist (persistent; Render free tier has ephemeral disk) |
 
 ---
 
@@ -53,9 +69,10 @@ The goal is to simulate how Product and Support teams use AI to generate structu
 - **Scrape** Google Play Store reviews (INDMoney `in.indwealth`)
 - **Discover themes** and classify reviews (Groq LLM)
 - **Generate weekly pulse** (Gemini LLM) — themes, quotes, actions
-- **Email delivery** — SMTP with draft/send modes
+- **Email delivery** — Resend API (deployed) or SMTP (local)
 - **Web UI** — Run pipeline, view report, send email
-- **Scheduler** — Weekly run at 9:00 AM IST (Phase 6 + GitHub Actions)
+- **Scheduler** — Weekly run at **9:00 AM IST** every Sunday (GitHub Actions)
+- **View Report** — Fetches from GitHub Gist when `REPORT_GIST_ID` set (Render free tier)
 
 ---
 
@@ -114,8 +131,9 @@ Edit `.env`:
 GROQ_API_KEY=your_groq_api_key
 GEMINI_API_KEY=your_gemini_api_key
 EMAIL_SENDER=your_email@gmail.com
-EMAIL_PASSWORD=your_gmail_app_password
+EMAIL_PASSWORD=your_gmail_app_password   # local SMTP
 EMAIL_RECIPIENT=recipient@example.com
+# RESEND_API_KEY=re_xxx   # for Render (SMTP blocked on free tier)
 ```
 
 ### 3. Run Locally
@@ -157,25 +175,26 @@ python main.py --phase run --mock
 
 ## Web UI
 
-1. **Run Pipeline** — Scrape, discover themes, classify, generate weekly pulse
-2. **View Report** — Show latest weekly pulse (markdown)
-3. **Send Email** — Send report to configured recipient  
-4. **Use sample data** — Checkbox to run without API keys (mock mode)
+1. **Run Pipeline** — Scrape, discover themes, classify, generate weekly pulse (blocked if scheduler ran today)
+2. **View Report** — Show latest weekly pulse from Gist; shows "Scheduler/Pipeline already ran today" when sync date is today
+3. **Send Email** — Send report via Resend (deployed) or SMTP (local)
+4. **Use previous synced data** — Checkbox: run with mock data; View Report fetches from Gist when checked
 
-**URL:** http://localhost:8000
+**URLs:** http://localhost:8000 (local) | https://app-review-insights-analyser.vercel.app (live)
 
 ---
 
 ## Phase 6: Scheduler
 
-**Scope:** 100 reviews, 8 weeks. Runs every Sunday at 9:00 AM IST.
+**Scope:** 100 reviews, 8 weeks. Runs every **Sunday at 9:00 AM IST** (3:30 AM UTC).
 
 | Mode | Command |
 |------|---------|
 | One-shot | `python -m phase6.scheduler` |
 | Daemon | `python -m phase6.daemon` |
+| **GitHub Actions** | `.github/workflows/weekly-pulse.yml` — cron `30 3 * * 0` |
 
-**Fixed recipient:** ashishmyweb@gmail.com (in `phase6/config.py`)
+**Email:** Sent from Web UI only (scheduler fetches data, no email).
 
 ---
 
@@ -183,15 +202,21 @@ python main.py --phase run --mock
 
 Workflow: `.github/workflows/weekly-pulse.yml`
 
-- **Schedule:** Sunday 3:30 AM UTC (= 9:00 AM IST)
+- **Schedule:** Sunday **9:00 AM IST** (3:30 AM UTC)
 - **Manual:** Actions → Weekly Pulse → Run workflow
 
 **Secrets (Settings → Secrets and variables → Actions):**
 
-- `GROQ_API_KEY`
-- `GEMINI_API_KEY`
-- `EMAIL_SENDER`
-- `EMAIL_PASSWORD`
+| Secret | Purpose |
+|--------|---------|
+| `GROQ_API_KEY` | Theme discovery, classification |
+| `GEMINI_API_KEY` | Weekly note generation |
+| `GH_GIST_TOKEN` | PAT with `gist` scope — upload report to Gist |
+| `REPORT_GIST_ID` | Gist ID (auto-created on first run; add to secrets + Render) |
+| `RENDER_URL` | Backend URL (optional) |
+| `REPORT_UPLOAD_SECRET` | Match Render env (optional) |
+
+**Email:** `EMAIL_SENDER`, `RESEND_API_KEY` (on Render; not in Actions)
 
 ---
 
@@ -201,9 +226,12 @@ Workflow: `.github/workflows/weekly-pulse.yml`
 |----------|---------|
 | `GROQ_API_KEY` | Theme discovery & classification (Phase 2) |
 | `GEMINI_API_KEY` | Weekly note generation (Phase 3) |
-| `EMAIL_SENDER` | SMTP sender |
-| `EMAIL_PASSWORD` | Gmail App Password |
+| `EMAIL_SENDER` | From address (Resend or SMTP) |
+| `EMAIL_PASSWORD` | Gmail App Password (local SMTP) |
 | `EMAIL_RECIPIENT` | Default email recipient |
+| `RESEND_API_KEY` | Resend API (Render free tier; SMTP blocked) |
+| `REPORT_GIST_ID` | Gist ID for View Report (Render env) |
+| `GH_GIST_TOKEN` | PAT with gist scope (GitHub Secrets, optional on Render) |
 
 ---
 
@@ -240,8 +268,10 @@ python -m pytest tests/ -v
 
 ## Deployment
 
-- **Backend (API)**: Railway (Docker)
+- **Backend (API)**: Render.com (Docker)
 - **Frontend**: Vercel
+- **Email**: Resend (Render free tier)
+- **Report Storage**: GitHub Gist (View Report on Render free tier)
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions.
 
