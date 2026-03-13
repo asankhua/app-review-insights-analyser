@@ -126,7 +126,6 @@ HTML_TEMPLATE = """
     <div class="content">
         {weekly_note_html}
     </div>
-    
         <div class="attached-snippet">
             <h3 style="color:#2c3e50; font-size:14px; margin-bottom:8px;">📎 Weekly Note (DOCX attached)</h3>
             <p style="background:#f1f3f5; padding:12px; border-radius:6px; font-size:13px; color:#495057;">{appended_filename}</p>

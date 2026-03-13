@@ -311,7 +311,7 @@ def get_email_preview() -> Optional[dict]:
         return None
     try:
         import re
-        from phase4.config.email_templates import HTML_TEMPLATE, format_markdown_to_html
+        from phase4.config.email_templates import HTML_TEMPLATE, format_markdown_to_html, strip_markdown_headers
 
         week_date = "Unknown"
         for line in content.split("\n"):
@@ -322,8 +322,9 @@ def get_email_preview() -> Optional[dict]:
                 week_date = line.split("Week of")[-1].strip()
                 break
 
-        snippet = content.strip()[:250].replace("\n", " ").strip()
-        if len(content.strip()) > 250:
+        raw_snippet = strip_markdown_headers(content).strip()[:250].replace("\n", " ")
+        snippet = re.sub(r"\s+", " ", raw_snippet).strip()
+        if len(strip_markdown_headers(content).strip()) > 250:
             snippet += "..."
         safe = re.sub(r"[^\w\s-]", "", week_date).strip().replace(" ", "_")[:40]
         attach_filename = f"INDMoney_Weekly_Pulse_{safe}.docx"

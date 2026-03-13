@@ -54,6 +54,8 @@ class Config:
     EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
     EMAIL_RECIPIENT = os.getenv("EMAIL_RECIPIENT")
     RESEND_API_KEY = os.getenv("RESEND_API_KEY")  # For Render free tier (SMTP blocked); optional
+    GOOGLE_DRIVE_CREDENTIALS_JSON = os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON")  # Service account JSON for Google Doc link
+    GOOGLE_DRIVE_CREDENTIALS_PATH = os.getenv("GOOGLE_DRIVE_CREDENTIALS_PATH")  # Or path to JSON file
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     

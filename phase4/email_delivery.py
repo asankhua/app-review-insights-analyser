@@ -193,9 +193,10 @@ class EmailDeliveryService:
             # Create email subject
             subject = custom_subject or f"INDMoney Weekly Review Pulse -- {week_date}"
             
-            # Snippet for appended doc (first ~200 chars)
-            note_snippet = weekly_note_content.strip()[:250].replace("\n", " ").strip()
-            if len(weekly_note_content.strip()) > 250:
+            # Snippet for appended doc (first ~200 chars, strip markdown for display)
+            raw_snippet = strip_markdown_headers(weekly_note_content).strip()[:250].replace("\n", " ")
+            note_snippet = re.sub(r"\s+", " ", raw_snippet).strip()
+            if len(strip_markdown_headers(weekly_note_content).strip()) > 250:
                 note_snippet += "..."
             
             # Attach filename (always .docx)
@@ -204,6 +205,12 @@ class EmailDeliveryService:
                 if weekly_note_path and Path(weekly_note_path).exists() and weekly_note_path.endswith(".md")
                 else self._make_attachment_filename(week_date)
             )
+            
+            # Create DOCX bytes for attachment (doc attached to mail, no link)
+            docx_bytes = None
+            if weekly_note_content_for_attach or (weekly_note_path and Path(weekly_note_path).exists() and weekly_note_path.endswith(".md")):
+                content_for_docx = weekly_note_content_for_attach or Path(weekly_note_path).read_text(encoding="utf-8")
+                docx_bytes = self._markdown_to_docx(content_for_docx)
             
             # Generate email body (strip # headers to avoid duplicates)
             note_text = strip_markdown_headers(weekly_note_content)
@@ -227,13 +234,14 @@ class EmailDeliveryService:
                 appended_filename=attach_filename,
             )
             
-            # Create attachments (from file path or from content when path empty)
+            # Create attachments (from file path or docx bytes)
             attachments = []
             if include_attachments:
                 attachments = self._create_attachments(
                     weekly_note_path,
                     weekly_note_content_for_attach,
                     attach_filename,
+                    docx_bytes,
                 )
             
             return EmailMessage(
@@ -306,12 +314,22 @@ class EmailDeliveryService:
         weekly_note_path: str,
         weekly_note_content: Optional[str] = None,
         attach_filename: Optional[str] = None,
+        docx_bytes: Optional[bytes] = None,
     ) -> List[EmailAttachment]:
-        """Create email attachments from file path or from content (e.g. Gist)."""
+        """Create email attachments from file path, content, or pre-built docx bytes."""
         attachments = []
         try:
-            # From file path: convert .md to .docx
-            if weekly_note_path and weekly_note_path.strip():
+            # Use pre-built docx if provided (from Drive upload path)
+            if docx_bytes and attach_filename:
+                attachment = EmailAttachment(
+                    filename=attach_filename,
+                    content=docx_bytes,
+                    content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    size=len(docx_bytes),
+                )
+                attachments.append(attachment)
+            # From file path: convert .md to .docx (when docx_bytes not pre-built)
+            elif weekly_note_path and weekly_note_path.strip() and not docx_bytes:
                 path = Path(weekly_note_path)
                 if path.exists() and path.suffix.lower() == ".md":
                     md_text = path.read_text(encoding="utf-8")
@@ -324,8 +342,8 @@ class EmailDeliveryService:
                         size=len(docx_bytes),
                     )
                     attachments.append(attachment)
-            # From content (e.g. Gist): convert to .docx
-            elif weekly_note_content and attach_filename:
+            # From content (e.g. Gist): convert to .docx (when docx_bytes not pre-built)
+            elif weekly_note_content and attach_filename and not docx_bytes:
                 docx_bytes = self._markdown_to_docx(weekly_note_content)
                 attachment = EmailAttachment(
                     filename=attach_filename,

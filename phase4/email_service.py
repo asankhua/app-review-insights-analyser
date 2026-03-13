@@ -70,6 +70,7 @@ class EmailService:
     def _send_resend(self, email_message: EmailMessage) -> Dict[str, Any]:
         """Send via Resend API (HTTPS; works on Render free tier)."""
         try:
+            import base64
             import resend
             resend.api_key = self.resend_api_key
             params = {
@@ -78,6 +79,14 @@ class EmailService:
                 "subject": email_message.subject,
                 "html": email_message.html_body,
             }
+            if email_message.attachments:
+                params["attachments"] = [
+                    {
+                        "filename": att.filename,
+                        "content": base64.b64encode(att.content).decode("ascii"),
+                    }
+                    for att in email_message.attachments
+                ]
             result = resend.Emails.send(params)
             logger.info(f"Email sent via Resend to {email_message.to_email}")
             return {
