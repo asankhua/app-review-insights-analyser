@@ -48,9 +48,11 @@ jobs:
             python main.py --phase run --skip-email --weeks 8 --count 100
           fi
 
-      # Upload report to Render so View Report shows last scheduler data
+      # Upload report to Gist (persistent, free) and optionally to Render
       - name: Upload report to backend
         env:
           RENDER_URL: ${{ secrets.RENDER_URL }}
           REPORT_UPLOAD_SECRET: ${{ secrets.REPORT_UPLOAD_SECRET }}
+          REPORT_GIST_ID: ${{ secrets.REPORT_GIST_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/upload_sync.py

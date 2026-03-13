@@ -107,9 +107,14 @@ async def api_run(req: RunRequest, background_tasks: BackgroundTasks):
 @app.get("/api/report")
 async def api_report():
     """Get latest weekly pulse content (markdown)."""
+    from phase5.pipeline import get_status
     content = get_latest_report()
     if content is None:
-        raise HTTPException(status_code=404, detail="No report found. Run pipeline first.")
+        status = get_status()
+        detail = "No report found. Run pipeline first."
+        if status.get("last_run"):
+            detail = "Report from last sync unavailable. Enable persistent disk on Render."
+        raise HTTPException(status_code=404, detail=detail)
     return {"content": content}
 
 

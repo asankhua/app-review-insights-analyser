@@ -470,7 +470,7 @@
         document.getElementById('reviews').textContent = s.reviews_count ?? '—';
         document.getElementById('themes').textContent = s.themes_count ?? '—';
         document.getElementById('lastRun').textContent = s.last_run ? formatIST(s.last_run) : 'Never';
-        document.getElementById('lastFetched').textContent = s.last_scraped ? formatIST(s.last_scraped) : 'Never';
+        document.getElementById('lastFetched').textContent = (s.last_synced || s.last_scraped) ? formatIST(s.last_synced || s.last_scraped) : 'Never';
         document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
         if (s.pipeline_error && pollTimer) {
           const err = String(s.pipeline_error);
@@ -570,7 +570,9 @@
       try {
         const r = await fetch(API + '/api/report');
         if (!r.ok) {
-          showMessage('No report yet. Run the pipeline with "Use previous synced data" checked first.', 'info');
+          const err = await r.json().catch(() => ({}));
+          const msg = err.detail || 'No report yet. Run the pipeline with "Use previous synced data" checked first.';
+          showMessage(msg, 'info');
           reportCard.style.display = 'none';
           return;
         }

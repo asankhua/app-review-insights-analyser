@@ -23,6 +23,7 @@
    - **Email (Render free tier):** Add `RESEND_API_KEY` — [resend.com](https://resend.com) free tier, works on Render (SMTP blocked). Use `EMAIL_SENDER` with a [verified domain](https://resend.com/domains).
    - **Email (local):** Use `EMAIL_SENDER` + `EMAIL_PASSWORD` (SMTP). No Resend needed.
    - **Scheduler → Render sync:** Add `REPORT_UPLOAD_SECRET` (shared with GitHub Secrets) so the scheduler can upload the report.
+   - **View Report on Render free tier (no persistent disk):** Use a GitHub Gist for storage. See §7.
 5. Deploy. **Backend URL:** `https://app-review-insights-analyser.onrender.com`
 
 ### Via Docker (Manual)
@@ -100,7 +101,23 @@ Set `CORS_ORIGINS` to include `http://localhost:3000` when testing the split set
 
 ---
 
-## 6. Syncing UI Changes
+## 7. View Report on Render Free Tier (GitHub Gist)
+
+Render's free tier has ephemeral storage—uploaded reports are lost on restart. Use a **GitHub Gist** for persistent storage (free, no upgrade).
+
+**Option A: Auto-create (recommended)** – No manual setup. Run the workflow (trigger Weekly Pulse manually). The first run creates a Gist and prints the ID. Add it to GitHub Secrets and Render env:
+
+1. Run the workflow (Actions → Weekly Pulse → Run workflow)
+2. In the workflow log, find the line `REPORT_GIST_ID = abc123...`
+3. Add to **GitHub Secrets**: `REPORT_GIST_ID` = that value
+4. Add to **Render** Environment Variables: `REPORT_GIST_ID` = same value
+5. On the next run, View Report will show the synced report
+
+**Option B: Create Gist manually** – Go to [gist.github.com](https://gist.github.com) → New gist → add `pulse.md` (`# placeholder`) and `meta.json` (`{}`) → Create. Copy the Gist ID from the URL. Add `REPORT_GIST_ID` to GitHub Secrets and Render.
+
+---
+
+## 8. Syncing UI Changes
 
 The main UI lives in `phase5/static/index.html`. For Vercel, a copy is in `frontend/public/`. After editing the UI, sync:
 

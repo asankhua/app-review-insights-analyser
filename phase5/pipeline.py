@@ -14,12 +14,17 @@ import json
 import logging
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).parent.parent
+
+# Cache for Gist fetch (avoids repeated API calls). TTL 60s.
+_gist_cache: dict[str, Any] = {}
+_GIST_CACHE_TTL = 60
 
 _SUBPROCESS_ENV = {**os.environ, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"}
 
@@ -145,15 +150,58 @@ def _save_sync_upload(report_content: str, report_date: str, last_run: Optional[
         raise
 
 
+def _fetch_from_gist() -> Optional[dict]:
+    """Fetch report and metadata from GitHub Gist. Cached 60s. Returns {content, last_run, report_date} or None."""
+    gist_id = os.environ.get("REPORT_GIST_ID", "").strip()
+    if not gist_id:
+        return None
+    now = time.time()
+    if _gist_cache and (now - _gist_cache.get("_ts", 0)) < _GIST_CACHE_TTL:
+        return _gist_cache
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            f"https://api.github.com/gists/{gist_id}",
+            headers={"Accept": "application/vnd.github+json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode())
+        files = data.get("files", {})
+        pulse = files.get("pulse.md") or files.get("pulse")
+        meta_file = files.get("meta.json") or files.get("meta")
+        content = pulse.get("content", "").strip() if pulse else ""
+        meta = {}
+        if meta_file:
+            try:
+                meta = json.loads(meta_file.get("content", "{}"))
+            except json.JSONDecodeError:
+                pass
+        last_run = meta.get("last_run", "") or None
+        report_date = meta.get("report_date", "")
+        if content:
+            _gist_cache.update({
+                "_ts": now, "content": content, "last_run": last_run,
+                "report_date": report_date, "has_report": True,
+            })
+            return _gist_cache
+    except Exception as e:
+        logger.debug("Gist fetch failed: %s", e)
+    return None
+
+
 def _get_last_run() -> Optional[str]:
-    """Get last pipeline/scheduler run timestamp from logs."""
+    """Get last pipeline/scheduler run timestamp from Gist (if configured) or logs."""
+    gist = _fetch_from_gist()
+    if gist and gist.get("last_run"):
+        return gist["last_run"]
     try:
         path = PROJECT_ROOT / "data" / "logs" / "last_run.txt"
         if path.exists():
             return path.read_text(encoding="utf-8").strip()
-        return None
     except Exception:
-        return None
+        pass
+    return None
 
 
 def _get_last_email_sent() -> Optional[str]:
@@ -181,18 +229,21 @@ def _get_last_email_sent() -> Optional[str]:
 
 
 def _get_status() -> dict:
-    """Internal status aggregation from data files."""
+    """Internal status aggregation. Prefers Gist (REPORT_GIST_ID) for report/sync; else uses data files."""
     reviews_dir = PROJECT_ROOT / "data" / "reviews"
     reports_dir = PROJECT_ROOT / "data" / "reports"
+    gist = _fetch_from_gist()
+    last_run = _get_last_run()
     status = {
         "reviews_count": 0,
         "themes_count": 0,
-        "has_report": False,
+        "has_report": bool(gist and gist.get("content")),
         "report_path": None,
-        "last_report_date": None,
+        "last_report_date": gist.get("report_date") if gist else None,
         "last_scraped": None,
+        "last_synced": last_run,
         "last_email_sent": _get_last_email_sent(),
-        "last_run": _get_last_run(),
+        "last_run": last_run,
         "pipeline_running": _pipeline_state["running"],
         "pipeline_error": _pipeline_state["error"],
     }
@@ -203,26 +254,32 @@ def _get_status() -> dict:
                 with open(files[-1]) as f:
                     data = json.load(f)
                 status["reviews_count"] = len(data.get("reviews", []))
-                status["last_scraped"] = data.get("scrapedAt", "")
+                status["last_scraped"] = data.get("scrapedAt", "") or None
+        if not status["last_synced"] and status.get("last_scraped"):
+            status["last_synced"] = status["last_scraped"]
         if reports_dir.exists():
             theme_files = list(reports_dir.glob("themes-*.json"))
             if theme_files:
                 with open(theme_files[-1]) as f:
                     data = json.load(f)
                 status["themes_count"] = len(data.get("themes", []))
-            pulse_files = list(reports_dir.glob("pulse-*.md"))
-            if pulse_files:
-                latest = sorted(pulse_files)[-1]
-                status["has_report"] = True
-                status["report_path"] = str(latest)
-                status["last_report_date"] = latest.stem.replace("pulse-", "")
+            if not status["has_report"]:
+                pulse_files = list(reports_dir.glob("pulse-*.md"))
+                if pulse_files:
+                    latest = sorted(pulse_files)[-1]
+                    status["has_report"] = True
+                    status["report_path"] = str(latest)
+                    status["last_report_date"] = status["last_report_date"] or latest.stem.replace("pulse-", "")
     except Exception as e:
         status["error"] = str(e)
     return status
 
 
 def get_latest_report() -> Optional[str]:
-    """Get content of latest weekly pulse (markdown)."""
+    """Get content of latest weekly pulse (markdown). Prefers Gist when REPORT_GIST_ID is set."""
+    gist = _fetch_from_gist()
+    if gist and gist.get("content"):
+        return gist["content"]
     path = _get_latest_report_path()
     if path and Path(path).exists():
         return Path(path).read_text(encoding="utf-8")
@@ -259,15 +316,27 @@ def get_email_preview() -> Optional[dict]:
         return None
 
 
+# Known sample report date - never serve this when last_run suggests a real sync occurred
+_SAMPLE_REPORT_DATE = "2025-01-01"
+
+
 def _get_latest_report_path() -> Optional[str]:
-    """Get path to latest pulse markdown. Prefer data/reports (scheduler/sync); fallback to sample_data."""
+    """Get path to latest pulse markdown. Prefer data/reports (scheduler/sync); fallback to sample_data.
+    When last_run exists (scheduler uploaded) but only sample report is present, return None to avoid
+    showing misleading January data instead of the lost synced report."""
     reports_dir = PROJECT_ROOT / "data" / "reports"
+    last_run = _get_last_run()
     if reports_dir.exists():
         pulse_files = list(reports_dir.glob("pulse-*.md"))
         if pulse_files:
-            return str(sorted(pulse_files)[-1])
+            latest_path = sorted(pulse_files)[-1]
+            latest_date = latest_path.stem.replace("pulse-", "")
+            # If we have last_run (scheduler sync) but only the sample report, don't serve it
+            if last_run and latest_date == _SAMPLE_REPORT_DATE:
+                return None
+            return str(latest_path)
     sample_dir = PROJECT_ROOT / "sample_data"
-    if sample_dir.exists():
+    if sample_dir.exists() and not last_run:
         sample_files = list(sample_dir.glob("pulse-*.md"))
         if sample_files:
             return str(sorted(sample_files)[-1])
