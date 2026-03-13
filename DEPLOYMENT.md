@@ -24,7 +24,7 @@
    - **Email (local):** Use `EMAIL_SENDER` + `EMAIL_PASSWORD` (SMTP). No Resend needed.
    - **Scheduler → Render sync:** Add `REPORT_UPLOAD_SECRET` (shared with GitHub Secrets) so the scheduler can upload the report.
    - **View Report on Render free tier (no persistent disk):** Use a GitHub Gist for storage. See §7.
-   - **Google Doc link in email:** Add `GOOGLE_DRIVE_CREDENTIALS_JSON` (service account JSON as string) to get a "View in Google Docs" link. See §8.
+   - **Email attachment:** Weekly Note is attached as DOCX (Resend supports attachments).
 5. Deploy. **Backend URL:** `https://app-review-insights-analyser.onrender.com`
 
 ### Via Docker (Manual)
@@ -126,18 +126,7 @@ Render's free tier has ephemeral storage—uploaded reports are lost on restart.
 
 ---
 
-## 8. Google Doc Link (Optional)
-
-To add a "View in Google Docs" button to the email (so recipients open it as a Google Doc):
-
-1. **Google Cloud Console** → Create project → Enable **Drive API**
-2. **APIs & Services** → **Credentials** → **Create Service Account** → Download JSON key
-3. Add to **Render** env: `GOOGLE_DRIVE_CREDENTIALS_JSON` = minified JSON content (or use `GOOGLE_DRIVE_CREDENTIALS_PATH` for file path)
-4. The email will include a "View in Google Docs" link; the DOCX is still attached as fallback.
-
----
-
-## 9. Syncing UI Changes
+## 8. Syncing UI Changes
 
 The main UI lives in `phase5/static/index.html`. For Vercel, a copy is in `frontend/public/`. After editing the UI, sync:
 

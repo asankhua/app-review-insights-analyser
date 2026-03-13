@@ -24,7 +24,7 @@ Transform App Store/Play Store reviews into actionable weekly insights for produ
 | **Backend** | Python 3.10/3.11, FastAPI, Uvicorn |
 | **Frontend** | Static HTML/CSS/JS, vanilla JS (no framework) |
 | **AI/LLM** | Groq (theme discovery, classification), Google Gemini (weekly note generation) |
-| **Email** | Resend API (Render) or SMTP (local) |
+| **Email** | Resend API (Render) or SMTP (local); DOCX attachment (python-docx) |
 | **Scraping** | google-play-scraper |
 | **Hosting** | Render.com (backend), Vercel (frontend) |
 | **Scheduler** | GitHub Actions (cron: Sunday 9:00 AM IST) |
@@ -136,17 +136,18 @@ The codebase is organized into separate phases for better maintainability and mo
 - **Required Secrets** (GitHub): `GROQ_API_KEY`, `GEMINI_API_KEY` (no email secrets; email from UI)
 
 ### Phase 4: Email Delivery (`phase4/`)
-- **Purpose**: Deliver weekly insights via email with SMTP integration
+- **Purpose**: Deliver weekly insights via email with DOCX attachment (Resend API or SMTP)
 - **Key Components**:
-  - `email_service.py`: SMTP email service with TLS encryption
-  - `email_delivery.py`: Email delivery orchestration
+  - `email_service.py`: Resend API (Render) or SMTP (local) with attachment support
+  - `email_delivery.py`: Email delivery orchestration; converts markdown to DOCX
   - `models/email.py`: Email data models and validation
   - `config/email_templates.py`: Email templates and HTML formatting
-  - `templates/`: Email template files
+  - `drive_upload.py`: Optional Google Drive upload (not used in current flow; DOCX attached directly)
+- **Attachments**: Weekly Note attached as `.docx` (python-docx); Resend and SMTP both support attachments
 - **Output**:
   - `data/drafts/draft_YYYYMMDD_HHMMSS.eml` (Email drafts)
   - `data/deliveries/delivery_*.json` (Delivery records)
-  - Sent emails via SMTP (when --send flag used)
+  - Sent emails via Resend (deployed) or SMTP (local) with DOCX attached
 
 ### Benefits of Phase-wise Organization:
 - **Modularity**: Each phase can be developed, tested, and maintained independently
@@ -351,36 +352,35 @@ graph TB
 ```
 
 ### Phase 4: Email Delivery
-**Objective**: Produce a draft email (and optionally send it) containing the weekly note
+**Objective**: Produce a draft email (and optionally send it) containing the weekly note with DOCX attachment
 
 **Components**:
-- Email Service Integration
-- Template Engine
-- SMTP Configuration
+- Email Service Integration (Resend API or SMTP)
+- Template Engine (HTML + plain text)
+- DOCX Attachment (python-docx; markdown → Word)
 - Dry-run Mode
 
 **Technical Stack**:
-- SMTP integration (smtplib)
+- Resend API (Render free tier; SMTP ports blocked)
+- SMTP integration (smtplib) for local
 - Markdown to HTML conversion
-- Multipart email formatting
-- TLS encryption
+- Multipart email with DOCX attachment (base64 for Resend)
+- TLS encryption (SMTP)
 
 **Message Format**:
 - **Subject**: INDMoney Weekly Review Pulse -- Week of {date}
 - **From**: EMAIL_SENDER
 - **To**: Runtime recipient or EMAIL_RECIPIENT
-- **Body**: Multipart (plain + HTML)
-- **Greeting**: "Hi {name}," when recipient name provided
+- **Body**: Multipart (plain + HTML); snippet section for attachment preview
+- **Attachment**: Weekly Note as `.docx` (INDMoney_Weekly_Pulse_*.docx)
 
 **Modes**:
-- **Dry-run (default)**: Write to data/reports/pulse-YYYY-MM-DD.eml
-- **Send mode**: Send via SMTP when --send flag provided
+- **Dry-run (default)**: Write to data/drafts/draft_*.eml
+- **Send mode**: Send via Resend or SMTP with DOCX attached
 
 **Configuration**:
-- EMAIL_SENDER
-- EMAIL_PASSWORD (Gmail App Password)
-- SMTP_HOST, SMTP_PORT
-- EMAIL_RECIPIENT (optional when runtime recipient provided)
+- EMAIL_SENDER, EMAIL_RECIPIENT
+- RESEND_API_KEY (Render); EMAIL_PASSWORD, SMTP_HOST, SMTP_PORT (local SMTP)
 
 ## Detailed System Architecture
 
@@ -462,8 +462,9 @@ app-review-insights-analyser/
 │       └── index.html               # Minimal Web UI (single page)
 ├── phase4/                         # Phase 4: Email Delivery
 │   ├── __init__.py
-│   ├── email_service.py             # SMTP email service
-│   ├── email_delivery.py            # Email delivery orchestration
+│   ├── email_service.py             # Resend API or SMTP; DOCX attachment support
+│   ├── email_delivery.py            # Email delivery; markdown→DOCX
+│   ├── drive_upload.py              # Optional: Google Drive upload (unused in current flow)
 │   ├── models/
 │   │   ├── __init__.py
 │   │   └── email.py                  # Email data models

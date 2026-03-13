@@ -57,7 +57,7 @@ The goal is to simulate how Product and Support teams use AI to generate structu
 | **Backend** | Python 3.10+, FastAPI, Uvicorn |
 | **Frontend** | Static HTML/CSS/JS (vanilla) |
 | **AI/LLM** | Groq (themes, classification), Google Gemini (weekly note) |
-| **Email** | Resend API (Render) or SMTP (local) |
+| **Email** | Resend API (Render) or SMTP (local); DOCX attachment |
 | **Hosting** | Render.com (backend), Vercel (frontend) |
 | **Scheduler** | GitHub Actions — Sunday **9:00 AM IST** |
 | **Report Storage** | GitHub Gist (persistent; Render free tier has ephemeral disk) |
@@ -69,7 +69,7 @@ The goal is to simulate how Product and Support teams use AI to generate structu
 - **Scrape** Google Play Store reviews (INDMoney `in.indwealth`)
 - **Discover themes** and classify reviews (Groq LLM)
 - **Generate weekly pulse** (Gemini LLM) — themes, quotes, actions
-- **Email delivery** — Resend API (deployed) or SMTP (local)
+- **Email delivery** — Resend API (deployed) or SMTP (local); Weekly Note attached as DOCX
 - **Web UI** — Run pipeline, view report, send email
 - **Scheduler** — Weekly run at **9:00 AM IST** every Sunday (GitHub Actions)
 - **View Report** — Fetches from GitHub Gist when `REPORT_GIST_ID` set (Render free tier)
@@ -177,7 +177,7 @@ python main.py --phase run --mock
 
 1. **Run Pipeline** — Scrape, discover themes, classify, generate weekly pulse (blocked if scheduler ran today)
 2. **View Report** — Show latest weekly pulse from Gist; shows "Scheduler/Pipeline already ran today" when sync date is today
-3. **Send Email** — Send report via Resend (deployed) or SMTP (local)
+3. **Send Email** — Send report via Resend (deployed) or SMTP (local); Weekly Note attached as DOCX
 4. **Use previous synced data** — Checkbox: run with mock data; View Report fetches from Gist when checked
 
 **URLs:** http://localhost:8000 (local) | https://app-review-insights-analyser.vercel.app (live)
@@ -248,6 +248,7 @@ Play Store → Phase 1 (Scrape) → Phase 2a (Themes) → Phase 2b (Classify) �
 - `data/reports/grouped_reviews-*.json` — Classified reviews
 - `data/reports/pulse-*.md` — Weekly pulse (markdown)
 - `data/drafts/*.eml` — Email drafts
+- **Email**: Weekly Note attached as `.docx` (DOCX)
 
 ---
 
@@ -270,7 +271,7 @@ python -m pytest tests/ -v
 
 - **Backend (API)**: Render.com (Docker)
 - **Frontend**: Vercel
-- **Email**: Resend (Render free tier)
+- **Email**: Resend (Render free tier); DOCX attachment included
 - **Report Storage**: GitHub Gist (View Report on Render free tier)
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions.
