@@ -26,6 +26,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 _gist_cache: dict[str, Any] = {}
 _GIST_CACHE_TTL = 60
 
+
+def _clear_gist_cache() -> None:
+    """Clear Gist cache so next fetch gets fresh data."""
+    _gist_cache.clear()
+
 _SUBPROCESS_ENV = {**os.environ, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"}
 
 # Shared state for background pipeline (avoids Render 30s request timeout)
@@ -70,6 +75,7 @@ def _run_in_process(mock: bool, weeks: int, count: int, send_email: bool) -> Pip
             _pipeline_state["error"] = err or "Unknown error"
             return PipelineResult(success=False, message="Pipeline failed", error=err or "Unknown error")
         _write_last_run()
+        _upload_report_to_gist()
         return PipelineResult(
             success=True,
             message="Pipeline completed successfully",
@@ -132,6 +138,26 @@ def _write_last_run() -> None:
         (logs_dir / "last_run.txt").write_text(ts, encoding="utf-8")
     except Exception:
         pass
+
+
+def _upload_report_to_gist() -> None:
+    """Upload the latest report to Gist so View Report shows fresh data.
+    Runs after pipeline succeeds (local or Render). Requires GH_GIST_TOKEN and REPORT_GIST_ID."""
+    if not os.environ.get("GH_GIST_TOKEN", "").strip() or not os.environ.get("REPORT_GIST_ID", "").strip():
+        return
+    try:
+        upload_script = PROJECT_ROOT / "scripts" / "upload_sync.py"
+        if upload_script.exists():
+            subprocess.run(
+                [sys.executable, str(upload_script)],
+                cwd=str(PROJECT_ROOT),
+                capture_output=True,
+                timeout=30,
+                env={**os.environ},
+            )
+            _clear_gist_cache()
+    except Exception as e:
+        logger.warning("Gist upload after pipeline failed: %s", e)
 
 
 def _save_sync_upload(report_content: str, report_date: str, last_run: Optional[str] = None) -> None:
@@ -213,6 +239,11 @@ def _get_last_run() -> Optional[str]:
     gist = _fetch_from_gist()
     if gist and gist.get("last_run"):
         return gist["last_run"]
+    return _get_local_last_run()
+
+
+def _get_local_last_run() -> Optional[str]:
+    """Get last pipeline run timestamp from local logs only."""
     try:
         path = PROJECT_ROOT / "data" / "logs" / "last_run.txt"
         if path.exists():
@@ -293,15 +324,54 @@ def _get_status() -> dict:
     return status
 
 
+def _parse_last_run(ts: Optional[str]) -> Optional[datetime]:
+    """Parse last_run timestamp (ISO format) for comparison. Returns None if invalid."""
+    if not ts or not isinstance(ts, str):
+        return None
+    ts = ts.strip()
+    if not ts:
+        return None
+    try:
+        # Handle ISO format with or without timezone
+        parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        # Normalize to timezone-aware for comparison (assume IST if naive)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=IST)
+        return parsed
+    except (ValueError, TypeError):
+        return None
+
+
 def get_latest_report() -> Optional[str]:
-    """Get content of latest weekly pulse (markdown). Prefers Gist when REPORT_GIST_ID is set."""
+    """Get content of latest weekly pulse (markdown).
+    Uses whichever source ran most recently: Scheduler (Gist) or Synced Pipeline (local).
+    Compares last_run from Gist meta vs local last_run.txt."""
     gist = _fetch_from_gist()
-    if gist and gist.get("content"):
-        return gist["content"]
+    gist_content = (gist.get("content") or "").strip() if gist else ""
+    gist_last_run = _parse_last_run(gist.get("last_run")) if gist else None
+
     path = _get_latest_report_path()
+    local_content = None
+    local_last_run = None
     if path and Path(path).exists():
-        return Path(path).read_text(encoding="utf-8")
-    return None
+        local_content = Path(path).read_text(encoding="utf-8").strip()
+        local_last_run = _parse_last_run(_get_local_last_run())
+
+    # If only one source has content, use it
+    if not gist_content and not local_content:
+        return None
+    if gist_content and not local_content:
+        return gist_content
+    if local_content and not gist_content:
+        return local_content
+
+    # Both have content: use whichever ran more recently
+    if gist_last_run and local_last_run:
+        return gist_content if gist_last_run >= local_last_run else local_content
+    # Fallback: prefer Gist when REPORT_GIST_ID set, else local
+    if gist_content:
+        return gist_content
+    return local_content
 
 
 def get_email_preview() -> Optional[dict]:
