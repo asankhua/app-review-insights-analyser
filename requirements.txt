@@ -1,6 +1,6 @@
 google-play-scraper==0.1.2
 pytest>=7.0.0
-pydantic==2.5.0
+pydantic>=2.7.0,<3
 emoji==2.10.0
 python-dotenv==1.0.0
 groq>=0.13.0  # 0.13+ fixes httpx proxies compatibility (0.11 fails with httpx>=0.28)
