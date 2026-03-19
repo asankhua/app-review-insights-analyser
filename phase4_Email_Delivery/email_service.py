@@ -13,6 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any
 
 from .models.email import EmailMessage, EmailStatus
