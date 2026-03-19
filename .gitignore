@@ -29,5 +29,8 @@ htmlcov/
 # Environment (keep .env.example)
 .env
 
+# Secrets (e.g. Google service account JSON for Phase 8 MCP)
+secrets/
+
 # Generated data
 data/

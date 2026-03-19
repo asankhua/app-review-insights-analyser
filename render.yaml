@@ -1,7 +1,6 @@
 # Render Blueprint - Backend API (Docker)
-# Deploy: Connect GitHub repo at https://dashboard.render.com
-# Add secrets (GROQ_API_KEY, GEMINI_API_KEY, REPORT_UPLOAD_SECRET, etc.) in Dashboard → Environment
-# Persistent disk required so scheduler-uploaded reports survive redeploys (paid plan)
+# Backend on Render.com. Frontend on Vercel. See docs/DEPLOYMENT.md
+# Add secrets in Dashboard → Environment (sync: false = secret, not from repo)
 
 services:
   - type: web
@@ -19,11 +18,15 @@ services:
         sync: false
       - key: EMAIL_SENDER
         sync: false
-      - key: EMAIL_PASSWORD
-        sync: false
       - key: EMAIL_RECIPIENT
         sync: false
+      - key: RESEND_API_KEY
+        sync: false  # Required on Render (SMTP blocked). resend.com
       - key: CORS_ORIGINS
-        sync: false  # e.g. https://app-review-insights-analyser.vercel.app
+        sync: false  # https://app-review-insights-analyser.vercel.app
       - key: REPORT_UPLOAD_SECRET
-        sync: false
+        sync: false  # Match GitHub Secrets for scheduler upload
+      - key: REPORT_GIST_ID
+        sync: false  # Gist ID for View Report (ephemeral disk)
+      - key: GH_GIST_TOKEN
+        sync: false  # PAT with gist scope

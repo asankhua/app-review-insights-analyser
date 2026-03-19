@@ -23,11 +23,11 @@ from typing import Optional
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent / "src"))
 
-from phase1.data_ingestion import DataIngestionService
-from phase2a.theme_discovery import ThemeDiscoveryService
-from phase2b.review_classification import ReviewClassificationService
-from phase3.note_generation import WeeklyNoteService
-from phase4.email_delivery import EmailDeliveryService
+from phase1_Data_Ingestion.data_ingestion import DataIngestionService
+from phase2a_Theme_Discovery.theme_discovery import ThemeDiscoveryService
+from phase2b_Review_Classification.review_classification import ReviewClassificationService
+from phase3_Weekly_Note_Generation.note_generation import WeeklyNoteService
+from phase4_Email_Delivery.email_delivery import EmailDeliveryService
 from src.config.settings import Config
 
 # Configure logging
@@ -36,7 +36,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('data/logs/phase1.log'),
+        logging.FileHandler('data/logs/phase1_Data_Ingestion.log'),
         logging.StreamHandler()
     ]
 )
@@ -252,23 +252,24 @@ def run_phase3_generate(args):
         print(f"❌ Phase 3 failed: {str(e)}")
         sys.exit(1)
 
-def run_phase4_email(args):
-    """Run Phase 4: Email Delivery"""
+def run_phase4_email(args, fee_explanation=None):
+    """Run Phase 4: Email Delivery. Optionally include Phase 7 fee_explanation in body."""
     try:
         logger.info("Starting Phase 4: Email Delivery for INDMoney")
         
         email_service = EmailDeliveryService()
         
         # Determine email mode
-        from phase4.models.email import EmailMode
+        from phase4_Email_Delivery.models.email import EmailMode
         mode = EmailMode.SEND if args.send else EmailMode.DRY_RUN
         
-        # Deliver email
+        # Deliver email (fee section included when fee_explanation is provided)
         response = email_service.deliver_weekly_note(
             recipient_email=args.recipient,
             recipient_name=args.recipient_name,
             mode=mode,
-            include_attachments=True
+            include_attachments=True,
+            fee_explanation=fee_explanation,
         )
         
         # Display results
@@ -388,6 +389,22 @@ def run_full_pipeline(args):
         print("="*50)
         run_phase3_generate(args)
         
+        # Phase 7: Fee explanation (optional; before Phase 4 so email can include fee section)
+        fee_explanation = None
+        report_date = None
+        if not getattr(args, 'skip_email', False):
+            from datetime import date
+            report_date = date.today()
+            try:
+                from phase7_Fee_Explanation import get_fee_explanation
+                fee_explanation = get_fee_explanation(report_date=report_date, save_to_reports=True)
+                if fee_explanation:
+                    print("\n" + "="*50)
+                    print("PHASE 7: Fee explanation (included in email)")
+                    print("="*50)
+            except Exception as e:
+                logger.warning("Phase 7 fee explanation skipped: %s", e)
+        
         # Phase 4 (skipped when --skip-email, e.g. scheduler)
         if getattr(args, 'skip_email', False):
             print("\n" + "="*50)
@@ -397,7 +414,21 @@ def run_full_pipeline(args):
             print("\n" + "="*50)
             print("PHASE 4: Email" + (" (send)" if args.send else " (draft)"))
             print("="*50)
-            run_phase4_email(args)
+            run_phase4_email(args, fee_explanation=fee_explanation)
+        
+        # Phase 8: Combined JSON → Google Doc (optional; after Phase 4)
+        if report_date is not None:
+            try:
+                from phase8_Combined_JSON_Google_Doc_MCP import run_phase8
+                ok, _, mcp_msg = run_phase8(report_date=report_date, fee_explanation=fee_explanation, save_to_reports=True)
+                if ok:
+                    print("\n" + "="*50)
+                    print("PHASE 8: Combined report (JSON + Google Doc if configured)")
+                    if mcp_msg:
+                        print("  " + mcp_msg)
+                    print("="*50)
+            except Exception as e:
+                logger.warning("Phase 8 combined JSON / Google Doc skipped: %s", e)
         
         # Record last run timestamp (IST) for UI status
         _write_last_run()
@@ -444,8 +475,8 @@ Examples:
   python main.py --phase run --send --recipient ashishmyweb@gmail.com
   python main.py --phase email --send --recipient team@company.com
   python main.py --phase status
-  python -m phase6.scheduler
-  python -m phase6.daemon
+  python -m phase6_Scheduler.scheduler
+  python -m phase6_Scheduler.daemon
         """
     )
     

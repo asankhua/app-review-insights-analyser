@@ -56,6 +56,14 @@ class Config:
     RESEND_API_KEY = os.getenv("RESEND_API_KEY")  # For Render free tier (SMTP blocked); optional
     GOOGLE_DRIVE_CREDENTIALS_JSON = os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON")  # Service account JSON for Google Doc link
     GOOGLE_DRIVE_CREDENTIALS_PATH = os.getenv("GOOGLE_DRIVE_CREDENTIALS_PATH")  # Or path to JSON file
+    FEE_EXPLANATION_URL = os.getenv("FEE_EXPLANATION_URL")  # Optional; Phase 7 fee/exit load source URL (e.g. INDMoney fund page)
+    GOOGLE_DOC_ID = os.getenv("GOOGLE_DOC_ID")  # Optional; Phase 8 target Google Doc ID (or URL) for appending combined report
+    # Phase 8 MCP (primary): when set, append to Google Doc via MCP server (e.g. google-docs-mcp-server); else fallback to Docs API
+    MCP_GOOGLE_DOCS_USE_MCP = os.getenv("MCP_GOOGLE_DOCS_USE_MCP", "").strip().lower() in ("1", "true", "yes")
+    MCP_GOOGLE_DOCS_MCP_COMMAND = os.getenv("MCP_GOOGLE_DOCS_MCP_COMMAND")  # e.g. uvx or python
+    MCP_GOOGLE_DOCS_MCP_ARGS = os.getenv("MCP_GOOGLE_DOCS_MCP_ARGS")  # e.g. ["google-docs-mcp-server"] or space-separated
+    MCP_GOOGLE_DOCS_SERVICE_ACCOUNT_PATH = os.getenv("MCP_GOOGLE_DOCS_SERVICE_ACCOUNT_PATH")  # or use GOOGLE_DRIVE_CREDENTIALS_PATH
+    MCP_GOOGLE_DOCS_SUBJECT_EMAIL = os.getenv("MCP_GOOGLE_DOCS_SUBJECT_EMAIL")  # Workspace user for domain-wide delegation
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     
