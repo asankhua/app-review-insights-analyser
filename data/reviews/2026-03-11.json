@@ -1,0 +1,68 @@
+{
+  "scrapedAt": "2026-03-11T20:48:32.953384",
+  "packageId": "in.indwealth",
+  "appId": "indmoney",
+  "weeksRequested": 8,
+  "reviews": [
+    {
+      "reviewId": "r1",
+      "rating": 4,
+      "text": "App is good but needs average NAV feature for mutual funds to track performance better. Would help with SIP tracking.",
+      "date": "2026-02-25T20:48:32"
+    },
+    {
+      "reviewId": "r2",
+      "rating": 2,
+      "text": "Can't modify orders after placement, this is very frustrating for active traders. Please add order modification within 5 minutes.",
+      "date": "2026-02-26T20:48:32"
+    },
+    {
+      "reviewId": "r3",
+      "rating": 5,
+      "text": "UI is confusing, hard to find mutual fund section and track investments. Great app otherwise.",
+      "date": "2026-02-27T20:48:32"
+    },
+    {
+      "reviewId": "r4",
+      "rating": 3,
+      "text": "Technical chart was better before. The new chart is not as user friendly as TradingView.",
+      "date": "2026-02-28T20:48:32"
+    },
+    {
+      "reviewId": "r5",
+      "rating": 2,
+      "text": "Fractional shares limit order does not work. It resets every time I try to set limit price for dollar amount.",
+      "date": "2026-03-01T20:48:32"
+    },
+    {
+      "reviewId": "r6",
+      "rating": 4,
+      "text": "Love the flash trading feature. App is faster now. Good job team.",
+      "date": "2026-03-02T20:48:32"
+    },
+    {
+      "reviewId": "r7",
+      "rating": 1,
+      "text": "Lost money due to multiple failed transactions. Order execution is unreliable during market hours.",
+      "date": "2026-03-03T20:48:32"
+    },
+    {
+      "reviewId": "r8",
+      "rating": 4,
+      "text": "Need trailing stop loss for US stocks. Feature request from long time user.",
+      "date": "2026-03-04T20:48:32"
+    },
+    {
+      "reviewId": "r9",
+      "rating": 3,
+      "text": "Fund tracking is broken. Shows wrong NAV and P&L. Please fix data sync issues.",
+      "date": "2026-03-05T20:48:32"
+    },
+    {
+      "reviewId": "r10",
+      "rating": 5,
+      "text": "Best investment app for NRIs. Simple and straightforward. Minor UI tweaks needed.",
+      "date": "2026-03-06T20:48:32"
+    }
+  ]
+}

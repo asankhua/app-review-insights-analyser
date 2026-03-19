@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-03-08 23:11:43.216214",
+  "appId": "indmoney",
+  "appName": "INDMoney",
+  "weekStart": "2026-03-02",
+  "weekEnd": "2026-03-08",
+  "report": {
+    "id": "weekly-indmoney-20260302",
+    "week_start": "2026-03-02",
+    "week_end": "2026-03-08",
+    "app_id": "indmoney",
+    "app_name": "INDMoney",
+    "themes": [
+      {
+        "id": "feature_requests",
+        "label": "Feature Requests",
+        "description": "Users asking for average NAV, trailing stoploss, order modification"
+      },
+      {
+        "id": "bug_fixes",
+        "label": "Bug Fixes",
+        "description": "Issues with order execution, fund tracking, fractional shares limit orders"
+      },
+      {
+        "id": "ui_ux",
+        "label": "UI/UX Issues",
+        "description": "Navigation difficulties, chart usability, interface problems"
+      }
+    ],
+    "quotes": [
+      {
+        "text": "User feedback shows areas for improvement",
+        "rating": 0,
+        "theme_id": "unknown"
+      },
+      {
+        "text": "User feedback shows areas for improvement",
+        "rating": 0,
+        "theme_id": "unknown"
+      },
+      {
+        "text": "User feedback shows areas for improvement",
+        "rating": 0,
+        "theme_id": "unknown"
+      }
+    ],
+    "actions": [
+      {
+        "description": "Continue improving user experience based on feedback",
+        "priority": "medium",
+        "theme_id": "unknown"
+      },
+      {
+        "description": "Continue improving user experience based on feedback",
+        "priority": "medium",
+        "theme_id": "unknown"
+      },
+      {
+        "description": "Continue improving user experience based on feedback",
+        "priority": "medium",
+        "theme_id": "unknown"
+      }
+    ],
+    "word_count": 129,
+    "generated_at": "2026-03-08 23:11:43.216192"
+  },
+  "metadata": {
+    "processing_time": 0.0001499652862548828,
+    "themes_count": 3,
+    "total_reviews": 10
+  }
+}

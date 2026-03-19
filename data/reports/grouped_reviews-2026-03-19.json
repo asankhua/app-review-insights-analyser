@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-03-19T09:20:47.396423+05:30",
+  "appId": "indmoney",
+  "packageId": "in.indwealth",
+  "themes": [
+    {
+      "id": "feature_requests",
+      "label": "Feature Requests",
+      "description": "Users asking for average NAV, trailing stoploss, order modification"
+    },
+    {
+      "id": "bug_fixes",
+      "label": "Bug Fixes",
+      "description": "Issues with order execution, fund tracking, fractional shares limit orders"
+    },
+    {
+      "id": "ui_ux",
+      "label": "UI/UX Issues",
+      "description": "Navigation difficulties, chart usability, interface problems"
+    }
+  ],
+  "byTheme": {
+    "feature_requests": [
+      {
+        "reviewId": "r1",
+        "rating": 4,
+        "text": "App is good but needs average NAV feature for mutual funds to track performance better. Would help with SIP tracking.",
+        "date": "2026-03-05T09:20:47",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r2",
+        "rating": 2,
+        "text": "Can't modify orders after placement, this is very frustrating for active traders. Please add order modification within 5 minutes.",
+        "date": "2026-03-06T09:20:47",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r8",
+        "rating": 4,
+        "text": "Need trailing stop loss for US stocks. Feature request from long time user.",
+        "date": "2026-03-12T09:20:47",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      }
+    ],
+    "bug_fixes": [
+      {
+        "reviewId": "r3",
+        "rating": 5,
+        "text": "UI is confusing, hard to find mutual fund section and track investments. Great app otherwise.",
+        "date": "2026-03-07T09:20:47",
+        "themeId": "bug_fixes",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r5",
+        "rating": 2,
+        "text": "Fractional shares limit order does not work. It resets every time I try to set limit price for dollar amount.",
+        "date": "2026-03-09T09:20:47",
+        "themeId": "bug_fixes",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r7",
+        "rating": 1,
+        "text": "Lost money due to multiple failed transactions. Order execution is unreliable during market hours.",
+        "date": "2026-03-11T09:20:47",
+        "themeId": "bug_fixes",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r9",
+        "rating": 3,
+        "text": "Fund tracking is broken. Shows wrong NAV and P&L. Please fix data sync issues.",
+        "date": "2026-03-13T09:20:47",
+        "themeId": "bug_fixes",
+        "confidence": 0.9
+      }
+    ],
+    "ui_ux": [
+      {
+        "reviewId": "r4",
+        "rating": 3,
+        "text": "Technical chart was better before. The new chart is not as user friendly as TradingView.",
+        "date": "2026-03-08T09:20:47",
+        "themeId": "ui_ux",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r6",
+        "rating": 4,
+        "text": "Love the flash trading feature. App is faster now. Good job team.",
+        "date": "2026-03-10T09:20:47",
+        "themeId": "ui_ux",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "r10",
+        "rating": 5,
+        "text": "Best investment app for NRIs. Simple and straightforward. Minor UI tweaks needed.",
+        "date": "2026-03-14T09:20:47",
+        "themeId": "ui_ux",
+        "confidence": 0.9
+      }
+    ],
+    "unclassified": []
+  },
+  "weeksRequested": 8,
+  "totalReviews": 10
+}

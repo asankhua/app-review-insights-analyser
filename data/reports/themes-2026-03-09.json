@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-03-09 08:29:54.456097",
+  "appId": "indmoney",
+  "packageId": "in.indwealth",
+  "themes": [
+    {
+      "id": "app_performance",
+      "label": "App Performance Issues",
+      "description": "users experiencing bugs, lags, and crashes"
+    },
+    {
+      "id": "kyc_and_account_issues",
+      "label": "KYC and Account Problems",
+      "description": "users facing difficulties with KYC updates and account management"
+    },
+    {
+      "id": "user_interface_improvements",
+      "label": "User Interface Improvements",
+      "description": "users suggesting simplification and streamlining of the app's UI"
+    },
+    {
+      "id": "feature_requests",
+      "label": "Feature Requests",
+      "description": "users requesting new features such as average NAV, charts, and analytical tools"
+    },
+    {
+      "id": "payment_and_brokerage",
+      "label": "Payment and Brokerage Issues",
+      "description": "users complaining about high brokerage charges, lack of UPI support, and difficulties with buying fractional shares"
+    }
+  ],
+  "sampleSize": 26,
+  "weeksRequested": 8
+}

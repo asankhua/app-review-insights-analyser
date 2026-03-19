@@ -32,5 +32,8 @@ htmlcov/
 # Secrets (e.g. Google service account JSON for Phase 8 MCP)
 secrets/
 
-# Generated data
-data/
+# Generated data - data/reports and data/logs are tracked for sync
+data/cache/
+data/deliveries/
+data/drafts/
+data/.DS_Store

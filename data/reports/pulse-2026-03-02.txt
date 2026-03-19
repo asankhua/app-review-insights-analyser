@@ -1,0 +1,16 @@
+ INDMoney Weekly Review Pulse -- March 02 - March 08
+
+# Top Themes
+Feature Requests: Users asking for average NAV and trailing stoploss features (31 mentions)
+Bug Fixes: Issues with order modification and fund tracking (26 mentions)  
+UI/UX Issues: Navigation difficulties and interface problems (23 mentions)
+
+# Real User Quotes
+"App is good but needs average NAV feature for mutual funds to track performance better"
+"Can't modify orders after placement, this is very frustrating for active traders"
+"UI is confusing, hard to find mutual fund section and track investments"
+
+# Action Ideas
+Action 1: Implement average NAV calculation for mutual funds (Priority: High)
+Action 2: Add order modification functionality within 5 minutes of placement (Priority: Medium)  
+Action 3: Redesign navigation to highlight mutual fund section prominently (Priority: Low)

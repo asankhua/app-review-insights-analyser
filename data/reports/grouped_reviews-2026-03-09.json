@@ -1,0 +1,255 @@
+{
+  "generatedAt": "2026-03-09 08:30:02.628142",
+  "appId": "indmoney",
+  "packageId": "in.indwealth",
+  "themes": [
+    {
+      "id": "app_performance",
+      "label": "App Performance Issues",
+      "description": "users experiencing bugs, lags, and crashes"
+    },
+    {
+      "id": "kyc_and_account_issues",
+      "label": "KYC and Account Problems",
+      "description": "users facing difficulties with KYC updates and account management"
+    },
+    {
+      "id": "user_interface_improvements",
+      "label": "User Interface Improvements",
+      "description": "users suggesting simplification and streamlining of the app's UI"
+    },
+    {
+      "id": "feature_requests",
+      "label": "Feature Requests",
+      "description": "users requesting new features such as average NAV, charts, and analytical tools"
+    },
+    {
+      "id": "payment_and_brokerage",
+      "label": "Payment and Brokerage Issues",
+      "description": "users complaining about high brokerage charges, lack of UPI support, and difficulties with buying fractional shares"
+    }
+  ],
+  "byTheme": {
+    "app_performance": [
+      {
+        "reviewId": "23a83411-0809-41a1-ba02-8106d0d72ace",
+        "rating": 2,
+        "text": "not sure why it's not compatible with tablet I have app on mobile but want to use it in table as well",
+        "date": "2026-03-06T17:58:59",
+        "themeId": "app_performance",
+        "confidence": 0.8
+      },
+      {
+        "reviewId": "d7facbf1-8b5b-4ec3-a8fd-31514c58419e",
+        "rating": 1,
+        "text": "lot of issues in modifying orders.. the app is good but this bugs are taking lots of time.i raise ticket they just close saying cancel and place order again",
+        "date": "2026-03-06T15:00:09",
+        "themeId": "app_performance",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "c11dc15a-7ab1-41c8-88b4-de29ab1b2058",
+        "rating": 4,
+        "text": "App is fine but external portfolios are not getting refreshed and it's asking to update the app, even when the app is updated.",
+        "date": "2026-03-05T17:40:42",
+        "themeId": "app_performance",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "8edb2987-d756-4a7b-b290-4a168791d9be",
+        "rating": 1,
+        "text": "bhai log ye app third class se bhi ghatiya hai,,, krupaya aap log iss app se trading na karo bahut hi lagg karta hai... aap apna capital mat gamao... mene mera sara SIP cancel kar diya hu... capital gavana chahte ho to please please iss app se trading mat karo... it's my humble request for all traders....",
+        "date": "2026-03-05T15:02:50",
+        "themeId": "app_performance",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "5252de25-daa5-4e1f-bf35-82b38f55f39d",
+        "rating": 5,
+        "text": "I love the app.! The app is so much faster download. But now download faster and more stable. Thank you so much to everyone algorithms. You’d stop an entry and it’d be several seconds before it’d actually stop and those extra seconds are added to the entry. Not to mention being unable to use the app when it’s syncing because it literally stops responding until it’s done.! This syncing happens pretty much every time you open the app, start, stop, or edit an entry so it was a real pain to use.",
+        "date": "2026-03-05T10:11:01",
+        "themeId": "app_performance",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "3b4aafd1-85a1-4ce6-8177-134d5703c2c4",
+        "rating": 5,
+        "text": "I love the app! The app is so much faster download. But now download faster and more stable. This is syncing happens pretty much every time you open the app, start, stop, or edit an entry, so it was a real pain to use. Thank you so much to everyone algorithms. You'd stop an entry and it'd be several seconds before it'd actually stop and those extra seconds are added too the entry. Not to mention being unable to use the app when it's syncing because its literally stop responding until it's done!",
+        "date": "2026-03-04T23:20:25",
+        "themeId": "app_performance",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "99bafa39-19e2-4abe-b7e4-364c90530cdb",
+        "rating": 5,
+        "text": "I love the app. Thank you so much to everyone. The app is soo much faster download. But now download faster and more stable. This syncing happens pretty much every time you open the app, start, stop, or edit an entry, so it used to be a real pain to use. You'd stop an entry and it'd be several seconds before it'd actually stop, and those extra seconds are added to the entry. Not to mention being unable to use the app when it's syncing because it literally stops responding until it's done.",
+        "date": "2026-03-04T21:29:07",
+        "themeId": "app_performance",
+        "confidence": 0.9
+      }
+    ],
+    "kyc_and_account_issues": [
+      {
+        "reviewId": "64c6ba41-78b4-4c72-b9a4-517ef341ee29",
+        "rating": 1,
+        "text": "most buggy app in existence of internet. I am unable to any investments. it just show please update your kyc and when I click the button it show it's successful but issue persist.",
+        "date": "2026-03-07T21:22:03",
+        "themeId": "kyc_and_account_issues",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "e55fb0ac-9b03-4a37-8cd9-c10bec56f0f9",
+        "rating": 1,
+        "text": "customer service is getting worst day by day. no responses on whatsapp, when you call the toll-free it just says everyone is busy call back later",
+        "date": "2026-03-05T15:34:04",
+        "themeId": "kyc_and_account_issues",
+        "confidence": 0.7
+      }
+    ],
+    "user_interface_improvements": [
+      {
+        "reviewId": "92737e92-d32a-43f4-a55d-9c5e93ca4716",
+        "rating": 1,
+        "text": "Dedicated SIP tab at the top of the app. Under My US stock -> Details , Another SIP option Under My US stock -> Transactions -> A small SIP tab Under Order tab -> There is one more SIP tab. I dont know which one is exact SIP i can pause / modify the amount. Which one is right transactions details. Its 'SIP' every nook and corner of the app . Looking for modifying the SIP amount for last 30 minutes. Why cant keep things simpler.",
+        "date": "2026-03-05T22:58:06",
+        "themeId": "user_interface_improvements",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "86d3fb20-e4cc-4002-a697-b09a2427a42c",
+        "rating": 5,
+        "text": "Pretty great app for investments in US stocks. Simple UI, easy to understand interface and easier deposit process.",
+        "date": "2026-03-05T07:24:33",
+        "themeId": "user_interface_improvements",
+        "confidence": 0.8
+      },
+      {
+        "reviewId": "7a806986-cf53-40d1-b576-843d7d0990e5",
+        "rating": 5,
+        "text": "good experience last 1 year i using this app and customer service and user interface i feel good experience",
+        "date": "2026-03-03T08:54:31",
+        "themeId": "user_interface_improvements",
+        "confidence": 0.8
+      }
+    ],
+    "feature_requests": [
+      {
+        "reviewId": "76ea451d-9a1d-49d0-9f64-c719f7409067",
+        "rating": 5,
+        "text": "DAY 1 - 05/03/2025 Starting my career as a investor. Today i started my first intraday trade and earn profit of 12.08 rupees. with 200 rupees in wallet. i believe its a good start. we will find out how it ends.",
+        "date": "2026-03-05T16:10:37",
+        "themeId": "feature_requests",
+        "confidence": 0.2
+      },
+      {
+        "reviewId": "d0d04c9a-00d8-459f-8335-81192304f021",
+        "rating": 4,
+        "text": "Overall good service as a broker for us stocks just missing basic analytical features to view fundamentals, charts and balance sheets. currently using trading view for charts and Yahoo finance for fundamentals/news updates.",
+        "date": "2026-03-05T16:10:16",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "c1c571ea-bf6e-4e28-acf2-6711d8320179",
+        "rating": 2,
+        "text": "need to include average NAV in the mutual funds. no charts available displaying the amount invested and current NAV please include in the next update.",
+        "date": "2026-03-05T08:50:07",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "6f42bc76-76b5-438d-a2f1-9786a68ba691",
+        "rating": 1,
+        "text": "No SIP Details Found in Individual Mutual Fund Order Section. Earlier There was a Dedicated section of SIP. It Should be Back. App Downgraded itself in Terms of Features.",
+        "date": "2026-03-05T08:33:56",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "8a343f4a-277e-493d-91c1-5c47f1b4dff8",
+        "rating": 5,
+        "text": "intraday trading is best in ind money with exposure to us stocks is good feature hope they will survive in this brokerage business worldwide",
+        "date": "2026-03-03T16:42:39",
+        "themeId": "feature_requests",
+        "confidence": 0.8
+      },
+      {
+        "reviewId": "713fdc70-138f-4f6e-84ec-c6e89ba9a8fe",
+        "rating": 5,
+        "text": "There is no average NAV in Mutual funds holding shown as in groww app",
+        "date": "2026-03-03T10:19:11",
+        "themeId": "feature_requests",
+        "confidence": 0.9
+      }
+    ],
+    "payment_and_brokerage": [
+      {
+        "reviewId": "d49d54c1-dd41-4ff0-82ce-48863de23e44",
+        "rating": 4,
+        "text": "now days broker charges are high for each stocks when we are buying..",
+        "date": "2026-03-07T04:48:22",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "6fa62d14-3b9f-4655-a266-d956a755ccc7",
+        "rating": 1,
+        "text": "You can't invest in stocks if you don't have their partnered bank accounts like ... HDFC, and ICC ... you can't pay with SBI or any bank account which max indians have",
+        "date": "2026-03-06T13:31:41",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "2cfcf25b-847b-4542-8940-f3e6b940ceba",
+        "rating": 5,
+        "text": "this platform is very easy to use and charges reasonable and the world best trading platform thanks",
+        "date": "2026-03-06T13:04:56",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.8
+      },
+      {
+        "reviewId": "8f18ff6f-b074-47ad-a148-1b04813b4d69",
+        "rating": 5,
+        "text": "This is the best app for traders and investors for the long term because in this app brokerage charges are so negligible. This is the most underrated app you can trust this review because I have downloaded many brokerage apps like groww , zerodha , angel one but I found this app as a super easy, minimal brokerage charge . And the main part is that it will form automatic charts like it will say a bullish flag is formed, bearish is formed. So i liked this app really so much",
+        "date": "2026-03-05T10:03:17",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "9ccdea36-4739-452c-8e3d-4fd3cb6e8f00",
+        "rating": 1,
+        "text": "Don't use this app because It is written daily reward but does not give daily reward",
+        "date": "2026-03-04T10:41:09",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.7
+      },
+      {
+        "reviewId": "34f2cb92-2574-47b3-bd5f-e1a64aa24a10",
+        "rating": 1,
+        "text": "worsr app. doesn't allow to buy fractional shares at limit order price. when you try to set limit order, it goes directly to number of shares and not the fractional amount of shares for the dollars we have. if we try to set it, it resets everytime. lost money due to multiple transactions on a single stock. and if you wish to buy fractional shares for the dollars you have then you have to buy blindly for the amount it is trading, no option to set limit order. was available before but now removed.",
+        "date": "2026-03-02T21:39:56",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "e9737100-4f13-4e2f-9dd3-af3b96e8aa0e",
+        "rating": 1,
+        "text": "unable to place buy orders for partial shares in the new update.",
+        "date": "2026-03-02T21:17:21",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.9
+      },
+      {
+        "reviewId": "a5944b26-ed09-4471-886f-ff8903a267d4",
+        "rating": 1,
+        "text": "App doesn't have UPI for adding money. What a surprising feature the India runs on UPI and INDMoney Itself provides UPI but they don't support adding money through UPI.",
+        "date": "2026-03-02T20:44:32",
+        "themeId": "payment_and_brokerage",
+        "confidence": 0.9
+      }
+    ],
+    "unclassified": []
+  },
+  "weeksRequested": 8,
+  "totalReviews": 26
+}

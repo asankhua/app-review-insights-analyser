@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-03-11T20:48:32.953733",
+  "appId": "indmoney",
+  "packageId": "in.indwealth",
+  "themes": [
+    {
+      "id": "feature_requests",
+      "label": "Feature Requests",
+      "description": "Users asking for average NAV, trailing stoploss, order modification"
+    },
+    {
+      "id": "bug_fixes",
+      "label": "Bug Fixes",
+      "description": "Issues with order execution, fund tracking, fractional shares limit orders"
+    },
+    {
+      "id": "ui_ux",
+      "label": "UI/UX Issues",
+      "description": "Navigation difficulties, chart usability, interface problems"
+    }
+  ],
+  "sampleSize": 10,
+  "weeksRequested": 8
+}
