@@ -42,11 +42,9 @@
 ### Option A: Vercel (Recommended)
 
 1. Go to [Vercel](https://vercel.com) and import your repo
-2. **Root Directory**: Set to `frontend` (recommended — avoids Python auto-detection). If using repo root, `vercel.json` sets `installCommand` to build the frontend.
-3. Add **Environment Variable**:
-   - `API_URL` = `https://app-review-insights-analyser.onrender.com` (optional; this is the default)
-4. Deploy. Vercel runs `npm run build` which injects the API URL into the frontend
-5. Copy your Vercel URL and add it to Render's `CORS_ORIGINS`
+2. **Root Directory**: Set to `frontend` (recommended) or repo root. If repo root, `vercel.json` builds the frontend.
+3. Deploy. **API calls are proxied** via Vercel rewrites (`/api/*` → Render), so no CORS issues.
+4. If your Render URL differs, edit `vercel.json` rewrite destination.
 
 ### Option B: Frontend via Docker
 
