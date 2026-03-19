@@ -5,7 +5,7 @@
 services:
   - type: web
     runtime: docker
-    name: app-review-insights-api
+    name: app-review-insights-analyser
     dockerfilePath: ./Dockerfile
     disk:
       name: app-data

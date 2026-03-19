@@ -5,6 +5,17 @@ Then open http://localhost:8000
 """
 # Reduce OpenBLAS threads before any heavy imports (avoids segfault on ARM macOS)
 import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).parent
+# Load .env from project root first (before any other imports)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / ".env", override=True)
+except ImportError:
+    pass
+
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 
@@ -13,11 +24,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", message=".*OpenSSL.*LibreSSL.*")
 
 import uvicorn
-import sys
-from pathlib import Path
 
 # Ensure project root on path
-ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 

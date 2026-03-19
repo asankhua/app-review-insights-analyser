@@ -403,7 +403,7 @@
 
   <script>
     // Use same origin so API calls work when served from this server (e.g. http://localhost:8000)
-    const API = "https://app-review-insights-analyser.onrender.com";
+    const API = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
 
     (function initTheme() {
       const stored = localStorage.getItem('theme');
@@ -638,7 +638,8 @@
       setLoading(true);
       hideMessage();
       try {
-        const r = await fetch(API + '/api/email/send', {
+        const base = (API || '').replace(/\/$/, '') || window.location.origin;
+        const r = await fetch(base + '/api/email/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipient: null })
@@ -649,7 +650,7 @@
           showMessage('Sending email…', 'info');
           const poll = async () => {
             try {
-              const sr = await fetch(API + '/api/email/send-status');
+              const sr = await fetch(base + '/api/email/send-status');
               const s = await sr.json();
               if (s.pending) {
                 setTimeout(poll, 2000);
@@ -657,7 +658,7 @@
               }
               setLoading(false);
               if (s.success) {
-                showMessage('Email sent successfully to Product Growth Team', 'success');
+                showMessage('Email sent successfully', 'success');
                 fetchStatus();
               } else {
                 showMessage(s.error || 'Email send failed', 'error');
@@ -670,13 +671,16 @@
           setTimeout(poll, 1500);
           return;
         }
-        if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : (d.detail?.message || 'Send failed'));
-        showMessage('Email sent successfully to Product Growth Team', 'success');
+        if (!r.ok) {
+          const msg = typeof d.detail === 'string' ? d.detail : (d.detail?.message || 'Send failed');
+          throw new Error(msg);
+        }
+        setLoading(false);
+        showMessage('Email sent successfully', 'success');
         fetchStatus();
       } catch (e) {
-        showMessage(e.message || 'Email send failed', 'error');
-      } finally {
         setLoading(false);
+        showMessage(e.message || 'Email send failed', 'error');
       }
     }
 

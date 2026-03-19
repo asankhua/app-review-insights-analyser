@@ -180,6 +180,7 @@ def _save_sync_upload(report_content: str, report_date: str, last_run: Optional[
 
 def _fetch_from_gist() -> Optional[dict]:
     """Fetch report and metadata from GitHub Gist. Cached 60s. Returns {content, last_run, report_date} or None."""
+    global _gist_last_error
     raw = os.environ.get("REPORT_GIST_ID", "").strip()
     # Allow full URL or just the ID
     if "/" in raw:
@@ -239,14 +240,11 @@ def _fetch_from_gist() -> Optional[dict]:
                 "_ts": now, "content": content, "last_run": last_run,
                 "report_date": report_date, "has_report": True,
             })
-            global _gist_last_error
             _gist_last_error = None
             return _gist_cache
-        global _gist_last_error
         _gist_last_error = f"Gist has no pulse.md content"
         logger.warning("Gist %s has no pulse.md content", gist_id)
     except Exception as e:
-        global _gist_last_error
         err_msg = str(e)
         try:
             from urllib.error import HTTPError, URLError

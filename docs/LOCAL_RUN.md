@@ -57,20 +57,31 @@ Then open **http://localhost:8000** in your browser.
 - **View Report** — shows latest weekly pulse (from local `data/reports/` or Gist if `REPORT_GIST_ID` is set).
 - **Send Email** — sends the latest report via Resend (if `RESEND_API_KEY` set) or SMTP (local).
 
-## 5. Email: easy & free (Resend)
+## 5. Email: easy & free (Brevo recommended)
 
-**No Gmail or SMTP setup needed.** Use [Resend](https://resend.com) (free tier: 100 emails/day):
+**Brevo** (free 300 emails/day) — uses SMTP, avoids proxy issues. Recommended when Resend API is blocked.
 
-1. Sign up at **resend.com** and verify your domain (or use their test sender).
-2. In the dashboard, create an API key and add to `.env`:
+1. Sign up at [brevo.com](https://www.brevo.com)
+2. **Settings → SMTP & API → SMTP** → Create an SMTP key
+3. Verify your sender email (or use the one you signed up with)
+4. Add to `.env` (comment out `RESEND_API_KEY` if set):
    ```bash
-   RESEND_API_KEY=re_xxxx
-   EMAIL_SENDER=onboarding@resend.dev
-   EMAIL_RECIPIENT=your@email.com
+   SMTP_HOST=smtp-relay.brevo.com
+   SMTP_PORT=587
+   EMAIL_SENDER=your@verified-email.com
+   EMAIL_PASSWORD=<your Brevo SMTP key>
+   EMAIL_RECIPIENT=recipient@example.com
    ```
-3. Run `pip install resend` (or `pip install -r requirements.txt`).
-4. **Send Email** in the UI will use Resend over HTTPS; no `EMAIL_PASSWORD` or Gmail required.
-5. For the **Word (.docx) report attachment** in the email, install: `pip install python-docx`.
+5. **Send Email** will use Brevo SMTP.
+
+**Resend** (optional, 100 emails/day) — uses API; can fail behind corporate proxy:
+```bash
+RESEND_API_KEY=re_xxxx
+EMAIL_SENDER=onboarding@resend.dev
+EMAIL_RECIPIENT=your@email.com
+```
+
+**Gmail SMTP** — use App Password: `SMTP_HOST=smtp.gmail.com`, `EMAIL_SENDER`, `EMAIL_PASSWORD` (16-char app password).
 
 ## 6. Optional: Phase 7 and Phase 8
 

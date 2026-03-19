@@ -2,13 +2,20 @@
 Configuration management for App Review Insights Analyzer
 """
 import os
+from pathlib import Path
 from typing import Dict, Optional
 from dataclasses import dataclass
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load .env from project root (works regardless of cwd)
+_project_root = Path(__file__).resolve().parent.parent.parent
+for _p in (_project_root / ".env", Path.cwd() / ".env"):
+    if _p.exists():
+        load_dotenv(_p, override=True)
+        break
+else:
+    load_dotenv(override=True)
 
 @dataclass
 class AppConfig:

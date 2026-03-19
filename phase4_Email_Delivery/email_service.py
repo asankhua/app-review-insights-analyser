@@ -6,14 +6,27 @@ Timestamps stored in IST for consistent UI display.
 from zoneinfo import ZoneInfo
 
 IST = ZoneInfo("Asia/Kolkata")
+import json
 import logging
+import os
+from pathlib import Path
+
+# Load .env before any Config/env reads (ensures EMAIL_SENDER/EMAIL_PASSWORD exist)
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+if _env_path.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_path, override=True)
+    except ImportError:
+        pass
+
 import smtplib
+import sys
 import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, Any
 
 from .models.email import EmailMessage, EmailStatus
@@ -27,18 +40,60 @@ class EmailService:
     
     def __init__(self):
         self.config = Config()
-        self.smtp_host = self.config.SMTP_HOST
-        self.smtp_port = self.config.SMTP_PORT
-        self.sender_email = self.config.EMAIL_SENDER
-        self.sender_password = self.config.EMAIL_PASSWORD
-        self.resend_api_key = self.config.RESEND_API_KEY
+        # Read env fresh (Config may have been cached before .env loaded)
+        self.smtp_host = (os.getenv("SMTP_HOST") or self.config.SMTP_HOST or "").strip().lower()
+        self.smtp_port = int(os.getenv("SMTP_PORT") or "587")
+        self.sender_email = (os.getenv("EMAIL_SENDER") or self.config.EMAIL_SENDER or "").strip() or None
+        self.sender_password = (os.getenv("EMAIL_PASSWORD") or self.config.EMAIL_PASSWORD or "").strip() or None
+        _resend = (os.getenv("RESEND_API_KEY") or self.config.RESEND_API_KEY or "").strip()
+        # Use Resend when key is set (HTTPS; works when SMTP/DNS is blocked). Else use SMTP.
+        self.resend_api_key = _resend or None
         
         if self.resend_api_key:
             if not self.sender_email:
                 raise ValueError("EMAIL_SENDER required (used as From address with Resend)")
             logger.info("Using Resend API for email")
-        elif not self.sender_email or not self.sender_password:
-            raise ValueError("EMAIL_SENDER and EMAIL_PASSWORD required, or set RESEND_API_KEY for Render free tier")
+        elif not self.sender_email or not self.sender_password or not self.smtp_host:
+            # Reload .env and fallback to manual parse (handles dotenv quirks with long/SMTP keys)
+            _root = Path(__file__).resolve().parent.parent
+            _env = _root / ".env"
+            if _env.exists():
+                try:
+                    from dotenv import load_dotenv
+                    load_dotenv(_env, override=True)
+                except Exception:
+                    pass
+            self.sender_email = (os.getenv("EMAIL_SENDER") or "").strip() or None
+            self.sender_password = (os.getenv("EMAIL_PASSWORD") or "").strip() or None
+            self.smtp_host = (os.getenv("SMTP_HOST") or self.config.SMTP_HOST or "").strip().lower() or self.smtp_host
+            # Manual parse if dotenv didn't load (e.g. long Brevo SMTP key or SMTP_HOST)
+            if (not self.sender_email or not self.sender_password or not self.smtp_host) and _env.exists():
+                try:
+                    text = _env.read_text(encoding="utf-8")
+                    for line in text.splitlines():
+                        line = line.strip()
+                        if line.startswith("#") or "=" not in line:
+                            continue
+                        k, _, v = line.partition("=")
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k == "EMAIL_SENDER" and v:
+                            self.sender_email = self.sender_email or v
+                        elif k == "EMAIL_PASSWORD" and v:
+                            self.sender_password = self.sender_password or v
+                        elif k == "SMTP_HOST" and v:
+                            self.smtp_host = self.smtp_host or v.strip().lower()
+                except Exception:
+                    pass
+            if not self.sender_email or not self.sender_password:
+                raise ValueError(
+                    "EMAIL_SENDER and EMAIL_PASSWORD required for SMTP. "
+                    "Check .env has EMAIL_SENDER, EMAIL_PASSWORD (no spaces around =). Or set RESEND_API_KEY."
+                )
+            if not self.smtp_host:
+                raise ValueError(
+                    "SMTP_HOST required for SMTP. Add SMTP_HOST=smtp-relay.brevo.com to .env for Brevo."
+                )
     
     def send_email(
         self, 
@@ -72,22 +127,7 @@ class EmailService:
     def _send_resend(self, email_message: EmailMessage) -> Dict[str, Any]:
         """Send via Resend API (HTTPS; works on Render free tier)."""
         try:
-            import base64
-            try:
-                import resend
-            except ImportError:
-                if self.sender_email and self.sender_password:
-                    logger.warning("Resend configured but 'resend' not installed; falling back to SMTP. Run: pip install resend")
-                    return self._send_smtp(email_message)
-                return {
-                    'status': EmailStatus.FAILED,
-                    'error_message': "Resend is configured but the 'resend' package is not installed. Run: pip install resend",
-                    'message_id': f"failed_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                    'sent_at': None,
-                    'processing_time': 0,
-                    'recipient': email_message.to_email,
-                    'subject': email_message.subject,
-                }
+            import resend
             resend.api_key = self.resend_api_key
             params = {
                 "from": self.sender_email,
@@ -96,18 +136,17 @@ class EmailService:
                 "html": email_message.html_body,
             }
             if email_message.attachments:
+                import base64
                 params["attachments"] = [
-                    {
-                        "filename": att.filename,
-                        "content": base64.b64encode(att.content).decode("ascii"),
-                    }
+                    {"filename": att.filename, "content": base64.b64encode(att.content).decode("ascii")}
                     for att in email_message.attachments
                 ]
             result = resend.Emails.send(params)
+            msg_id = result.get("id") if isinstance(result, dict) else getattr(result, "id", None)
             logger.info(f"Email sent via Resend to {email_message.to_email}")
             return {
                 'status': EmailStatus.SENT,
-                'message_id': result.get('id', f"resend_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
+                'message_id': msg_id or f"resend_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                 'sent_at': datetime.now(IST).isoformat(),
                 'processing_time': 0.5,
                 'recipient': email_message.to_email,
@@ -127,6 +166,18 @@ class EmailService:
 
     def _send_smtp(self, email_message: EmailMessage) -> Dict[str, Any]:
         """Send email via SMTP"""
+        if not self.smtp_host:
+            return {
+                'status': EmailStatus.FAILED,
+                'error_message': (
+                    "SMTP_HOST is empty. Add SMTP_HOST=smtp-relay.brevo.com to .env and restart."
+                ),
+                'message_id': f"failed_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                'sent_at': None,
+                'processing_time': 0,
+                'recipient': email_message.to_email,
+                'subject': email_message.subject
+            }
         try:
             # Create message
             msg = MIMEMultipart('alternative')
@@ -199,6 +250,17 @@ class EmailService:
                 'recipient': email_message.to_email,
                 'subject': email_message.subject
             }
+        except OSError as e:
+            err_str = str(e)
+            if "nodename nor servname" in err_str.lower() or getattr(e, "errno", None) == 8:
+                host_info = f"'{self.smtp_host}'" if self.smtp_host else "(empty)"
+                err_str = (
+                    f"SMTP host {host_info} cannot be resolved. Check: "
+                    "1) SMTP_HOST in .env (e.g. smtp-relay.brevo.com) — save and restart. "
+                    "2) Your network/DNS — corporate firewall may block SMTP. "
+                    "3) Try Resend (HTTPS) instead: set RESEND_API_KEY in .env."
+                )
+            logger.error(f"SMTP send failed: {err_str}")
         except Exception as e:
             err_str = str(e)
             if "535" in err_str and ("password" in err_str.lower() or "username" in err_str.lower() or "badcredentials" in err_str.lower()):
@@ -207,7 +269,7 @@ class EmailService:
                     "Google Account → Security → 2-Step Verification → App passwords; set EMAIL_PASSWORD in .env"
                 )
             logger.error(f"SMTP send failed: {err_str}")
-            return {
+        return {
                 'status': EmailStatus.FAILED,
                 'error_message': err_str,
                 'message_id': f"failed_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
