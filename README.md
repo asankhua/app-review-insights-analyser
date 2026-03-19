@@ -67,6 +67,20 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 
 ---
 
+## External APIs Used
+
+| API | Base URL / Docs | Auth | Purpose | Phase |
+|-----|-----------------|------|---------|-------|
+| **Groq** | https://console.groq.com, https://api.groq.com | `GROQ_API_KEY` (Bearer) | Theme discovery, review classification (llama-3.3-70b-versatile) | 2a, 2b |
+| **Google Gemini** | https://ai.google.dev, https://generativelanguage.googleapis.com | `GEMINI_API_KEY` | Weekly note generation (gemini-1.5-flash) | 3 |
+| **Resend** | https://api.resend.com | `RESEND_API_KEY` (Bearer) | Send email with DOCX attachment | 4 |
+| **GitHub Gist** | https://api.github.com/gists | `GH_GIST_TOKEN` (Bearer) or none (public) | Fetch/create/update `pulse.md` + `meta.json` for View Report | 5, scripts |
+| **Google Docs** | https://docs.googleapis.com | Service account (JSON) | Append combined report to Google Doc (Phase 8 fallback) | 8 |
+| **Google Play** | Via google-play-scraper (no official API) | None | Scrape app reviews | 1 |
+| **HTTP fetch** | `FEE_EXPLANATION_URL` (configurable) | None | Fetch fund page HTML for exit load (Phase 7) | 7 |
+
+---
+
 ## Features
 
 - **Scrape** Google Play Store reviews (INDMoney `in.indwealth`)
