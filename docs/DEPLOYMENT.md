@@ -66,7 +66,7 @@ docker run -p 80:80 <image>
 The backend must allow your frontend origin. In Render → Environment, add:
 
 ```
-CORS_ORIGINS=https://app-review-insights-analyser.vercel.app
+CORS_ORIGINS=https://app-review-insights-analyser-dx6z.vercel.app
 ```
 
 Use your actual Vercel URL. Comma-separate for multiple: `https://app.vercel.app,https://custom.com`

@@ -9,7 +9,7 @@ Transform App Store/Play Store reviews into actionable weekly insights for produ
 
 | Service               | URL                                                                                                            | Description                                                             |
 | --------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Frontend (Vercel)** | [https://app-review-insights-analyser.vercel.app](https://app-review-insights-analyser.vercel.app)             | Web UI (View Report, Preview Email, Send Email)                         |
+| **Frontend (Vercel)** | [https://app-review-insights-analyser-dx6z.vercel.app](https://app-review-insights-analyser-dx6z.vercel.app)             | Web UI (View Report, Preview Email, Send Email)                         |
 | **Backend (Render)**  | [https://app-review-insights-analyser.onrender.com](https://app-review-insights-analyser.onrender.com)         | FastAPI REST API (Docker)                                               |
 | **API Base**          | [https://app-review-insights-analyser.onrender.com/api](https://app-review-insights-analyser.onrender.com/api) | REST endpoints (status, report, email preview/send)                     |
 | **Resend**            | [https://resend.com](https://resend.com)                                                                       | Email delivery (API, used on Render free tier)                          |

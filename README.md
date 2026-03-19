@@ -8,7 +8,7 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| **Frontend (Vercel)** | https://app-review-insights-analyser.vercel.app | Web UI: View Report, Preview Email, Send Email |
+| **Frontend (Vercel)** | https://app-review-insights-analyser-dx6z.vercel.app | Web UI: View Report, Preview Email, Send Email |
 | **Backend (Render)** | https://app-review-insights-analyser.onrender.com | FastAPI REST API (Docker) |
 | **API Base** | https://app-review-insights-analyser.onrender.com/api | REST endpoints |
 | **Health Check** | https://app-review-insights-analyser.onrender.com/api/health | Lightweight liveness probe |

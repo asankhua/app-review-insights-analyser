@@ -23,7 +23,7 @@ services:
       - key: RESEND_API_KEY
         sync: false  # Required on Render (SMTP blocked). resend.com
       - key: CORS_ORIGINS
-        sync: false  # https://app-review-insights-analyser.vercel.app
+        sync: false  # https://app-review-insights-analyser-dx6z.vercel.app
       - key: REPORT_UPLOAD_SECRET
         sync: false  # Match GitHub Secrets for scheduler upload
       - key: REPORT_GIST_ID

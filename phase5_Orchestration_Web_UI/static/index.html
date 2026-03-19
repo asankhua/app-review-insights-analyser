@@ -577,7 +577,7 @@
         } catch (fetchErr) {
           var hint = '';
           if (/failed to fetch|load failed|networkerror|timeout|abort/i.test((fetchErr.message || '').toLowerCase())) {
-            hint = ' Render may be starting (free tier wakes in 30-60s). Wait 1 min, refresh, try again. Ensure CORS_ORIGINS includes https://app-review-insights-analyser.vercel.app';
+            hint = ' Render may be starting (free tier wakes in 30-60s). Wait 1 min, refresh, try again. Ensure CORS_ORIGINS includes https://app-review-insights-analyser-dx6z.vercel.app';
           }
           showMessage((fetchErr.message || 'Failed to load report') + hint, 'error');
           return;
