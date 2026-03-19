@@ -311,12 +311,20 @@ def _get_status() -> dict:
     # Scheduler run = from Gist only (GitHub Actions / sync). Never disappears when Gist has data.
     scheduler_run = (gist.get("last_run") or "").strip() or None if gist else None
     gist_configured = bool(os.environ.get("REPORT_GIST_ID", "").strip())
+    # Consider local reports when Gist fails (sync uploads to Render)
+    local_path = _get_latest_report_path()
+    has_local = False
+    if local_path:
+        p = PROJECT_ROOT / local_path if not Path(local_path).is_absolute() else Path(local_path)
+        has_local = p.exists()
     status = {
         "reviews_count": 0,
         "themes_count": 0,
-        "has_report": bool(gist and gist.get("content")),
-        "report_path": None,
-        "last_report_date": gist.get("report_date") if gist else None,
+        "has_report": bool(gist and gist.get("content")) or has_local,
+        "report_path": str(local_path) if local_path else None,
+        "last_report_date": (gist.get("report_date") if gist else None) or (
+            Path(local_path).stem.replace("pulse-", "") if local_path and has_local else None
+        ),
         "gist_unavailable": gist_configured and (gist is None),
         "last_scraped": None,
         "last_synced": last_run,

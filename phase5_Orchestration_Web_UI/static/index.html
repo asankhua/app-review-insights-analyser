@@ -385,7 +385,6 @@
 
     <div class="card" id="reportCard" style="display:none;">
       <h2 class="card-title">Weekly Pulse</h2>
-      <div class="message message-info" id="reportFallbackWarning" style="display:none; margin-bottom:12px;"></div>
       <div class="report" id="reportContent"></div>
     </div>
   </main>
@@ -396,7 +395,6 @@
         <h3 id="previewSubject">Email Preview</h3>
         <button type="button" class="btn-secondary" onclick="closePreviewModal()">Close</button>
       </div>
-      <div class="message message-info" id="previewFallbackWarning" style="display:none; margin:0 24px 12px;"></div>
       <div class="preview-modal-body">
         <iframe id="previewFrame" title="Email preview"></iframe>
       </div>
@@ -564,13 +562,6 @@
         }
         const d = await reportRes.json();
         reportContent.textContent = d.content || '';
-        var warnEl = document.getElementById('reportFallbackWarning');
-        if (d.fallback_warning) {
-          warnEl.textContent = d.fallback_warning;
-          warnEl.style.display = 'block';
-        } else {
-          warnEl.style.display = 'none';
-        }
         reportCard.style.display = 'block';
       } catch (e) {
         showMessage(e.message || 'Failed to load report', 'error');
@@ -599,13 +590,6 @@
         const iframe = document.getElementById('previewFrame');
         iframe.srcdoc = d.html;
         document.getElementById('previewSubject').textContent = d.subject || 'Email Preview';
-        var pw = document.getElementById('previewFallbackWarning');
-        if (d.fallback_warning) {
-          pw.textContent = d.fallback_warning;
-          pw.style.display = 'block';
-        } else {
-          pw.style.display = 'none';
-        }
         document.getElementById('previewModal').style.display = 'flex';
       } catch (e) {
         showMessage(e.message || 'Failed to load preview', 'error');

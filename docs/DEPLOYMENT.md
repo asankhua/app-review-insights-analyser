@@ -102,25 +102,26 @@ Set `CORS_ORIGINS` to include `http://localhost:3000` when testing the split set
 
 ---
 
-## 7. View Report on Render Free Tier (GitHub Gist)
+## 7. View Report on Render (Gist + Sync Upload)
 
-Render's free tier has ephemeral storage—uploaded reports are lost on restart. Use a **GitHub Gist** for persistent storage (free, no upgrade).
+The scheduler uploads reports to **both** GitHub Gist and the Render backend. For View Report to show the latest synced data:
 
-**Requirement:** `GITHUB_TOKEN` cannot create Gists. Create a **Personal Access Token (PAT)** with `gist` scope:
+**GitHub Secrets (workflow uploads to Gist + Render):**
+- `GH_GIST_TOKEN` — PAT with `gist` scope (Settings → Developer settings → Tokens)
+- `REPORT_GIST_ID` — Gist ID (from first workflow run log)
+- `RENDER_URL` — Backend URL, e.g. `https://app-review-insights-analyser.onrender.com` (enables sync to Render)
+- `REPORT_UPLOAD_SECRET` — Must match Render env (shared secret for sync)
 
-1. GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
-2. **Generate new token** → enable **gist** → Generate
-3. Add to **GitHub Secrets**: `GH_GIST_TOKEN` = your PAT
+**Render Environment:**
+- `REPORT_GIST_ID` — Gist ID (for fetching when Gist is primary)
+- `GH_GIST_TOKEN` — PAT with gist scope (improves Gist fetch reliability)
 
-**Option A: Auto-create** – Run the workflow. The first run creates a Gist and prints the ID:
+**Option A: Auto-create Gist** – Run the workflow. The first run creates a Gist and prints the ID:
 
-1. Add `GH_GIST_TOKEN` to GitHub Secrets (see above)
+1. Add `GH_GIST_TOKEN`, `RENDER_URL`, `REPORT_UPLOAD_SECRET` to GitHub Secrets
 2. Run workflow (Actions → Weekly Pulse → Run workflow)
-3. In the log, find `REPORT_GIST_ID = abc123...`
-4. Add to **GitHub Secrets**: `REPORT_GIST_ID` = that value
-5. Add to **Render** env: `REPORT_GIST_ID` = Gist ID only (e.g. `abc123def456`, not the full URL)
-6. (Optional) Add `GH_GIST_TOKEN` to Render too—improves fetch reliability
-7. View Report will show the synced report
+3. In the log, find `REPORT_GIST_ID = abc123...` → Add to GitHub Secrets and Render env
+4. View Report will show the synced report (from Gist or local when Gist unreachable)
 
 **Option B: Create Gist manually** – [gist.github.com](https://gist.github.com) → New gist → add `pulse.md` and `meta.json` → Create. Copy Gist ID. Add `REPORT_GIST_ID` to GitHub Secrets and Render (still need `GH_GIST_TOKEN` for uploads).
 
