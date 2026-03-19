@@ -19,7 +19,9 @@ Transform App Store/Play Store reviews into actionable weekly insights for produ
 
 **Hosting:** Backend on **Render.com** (Docker). Frontend on **Vercel**.
 
-**Local:** [http://localhost:8000](http://localhost:8000) (Web UI + API via `.venv/bin/python run_web.py`)
+**Local:** [http://localhost:8000](http://localhost:8000) (Web UI + API via `python run_web.py`)
+
+**Debug:** [https://app-review-insights-analyser.onrender.com/api/debug/fee](https://app-review-insights-analyser.onrender.com/api/debug/fee) — verify `FEE_EXPLANATION_URL` / `EXIT_LOAD_VALUE` on Render
 
 ## Tech Stack
 
@@ -155,7 +157,7 @@ The codebase is organized into separate phases for better maintainability and mo
   2. **Preview Email** — HTML preview (respects "Use sample data" checkbox)
   3. **Send Email** — Send latest report via Resend (deployed) or SMTP (local); DOCX attachment
 - **Checkbox:** "Use sample data" — when checked, View Report and Preview use sample_data; else last synced (Gist/local)
-- **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Google Doc (MCP) status
+- **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Fee (email/doc), Google Doc (MCP) status
 - **Report preview** — Rendered markdown in a simple card
 - **No** Run Pipeline (pipeline runs via GitHub Actions scheduler only). **No** analytics, scheduling, or config UI (use CLI / .env)
 
@@ -188,6 +190,8 @@ The codebase is organized into separate phases for better maintainability and mo
 - **Email usage**: The emailer receives this payload and appends to the body: **Fee Explanation: {fee_scenario}**, then Bullet 1, Bullet 2, Bullet 3.
 - **Error handling**: If `FEE_EXPLANATION_URL` is not set or fetch/parse fails, the fee section is **omitted** from the email and combined JSON; pipeline continues. Log warning.
 - **Config**: **`FEE_EXPLANATION_URL`** (optional). If unset, the fee explanation step is **skipped** and no fee section is added to email or combined JSON.
+- **`EXIT_LOAD_VALUE`** (optional): When fetch fails (e.g. fund page blocked on Render), use this env value in the fallback fee section so the email/DOCX still show a value.
+- **Implementation notes**: Fee section is included in both email body (HTML + plain text) and DOCX attachment. Token/URL values are sanitized (quotes stripped) for Render env. `GET /api/debug/fee` helps verify fee config at runtime.
 - **Outputs feed**: Phase 4 (email body: fee scenario + bullets + source_links) and Phase 8 (combined JSON: fee_scenario, explanation_bullets, source_links, last_checked).
 
 ### Phase 8: Combined JSON → Google Doc (MCP) (`phase8_Combined_JSON_Google_Doc_MCP/`)
@@ -1078,29 +1082,19 @@ Action 3: [Action description]
 - **Sentiment Analysis**: Mood and satisfaction metrics
 - **Export Options**: Download reports in various formats
 
-### API Endpoints
+### API Endpoints (Phase 5)
 
-```python
-# Review Management
-POST /api/reviews/scrape           # Trigger review scraping
-GET  /api/reviews                 # List reviews
-POST /api/reviews/import          # Import from file
-
-# Report Generation
-POST /api/reports/generate        # Generate new report
-GET  /api/reports                 # List reports
-GET  /api/reports/{id}            # Get specific report
-
-# Email Operations
-POST /api/email/send              # Send email report
-GET  /api/email/templates         # List templates
-POST /api/email/schedule          # Schedule email delivery
-
-# Configuration
-GET  /api/config/apps             # Get configured apps
-POST /api/config/apps             # Add new app
-GET  /api/config/status           # System status
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Web UI (HTML) |
+| `GET` | `/api/health` | Health check (no deps) |
+| `GET` | `/api/status` | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent, Fee, MCP) |
+| `GET` | `/api/report` | Latest weekly pulse (markdown; `?sample=1` for sample data) |
+| `GET` | `/api/email/preview` | Email preview HTML (`?sample=1` for sample data) |
+| `POST` | `/api/email/send` | Send latest report via Resend/SMTP (DOCX attached) |
+| `GET` | `/api/email/send-status` | Poll send result after `POST /api/email/send` |
+| `POST` | `/api/upload/sync` | Scheduler upload (report to backend; `X-Upload-Secret` required) |
+| `GET` | `/api/debug/fee` | Debug fee config (`fee_url_configured`, `fee_fetch_ok`, etc.) |
 
 ## CLI Interface
 
@@ -1215,6 +1209,7 @@ python main.py --phase run --skip-email --weeks 8 --count 100
 - After scheduler run: `scripts/upload_sync.py` uploads `pulse.md` + `meta.json` to Gist
 - Backend fetches from Gist when `REPORT_GIST_ID` is set in Render env
 - See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) §7 for setup
+- **Gist 401 handling**: `GH_GIST_TOKEN` is sanitized (quotes/stray whitespace stripped). On 401 Unauthorized, the backend retries without auth (public Gists work unauthenticated). Use a **classic PAT** with `gist` scope (not fine-grained) for private Gists.
 
 ### Phase 7 & 8 configuration (optional)
 

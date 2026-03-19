@@ -36,4 +36,5 @@ secrets/
 data/cache/
 data/deliveries/
 data/drafts/
+data/logs/*.log
 data/.DS_Store

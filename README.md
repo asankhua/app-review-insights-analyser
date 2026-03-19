@@ -1,65 +1,23 @@
 # INDMoney Review Insights Analyzer
 
-Transform Google Play Store reviews into actionable weekly insights — top themes, user quotes, and action ideas — for product, growth, and leadership teams.
-
-### Who This Helps
-
-| Team | Benefit |
-|------|---------|
-| **Product / Growth** | Understand what to fix next — prioritised themes from real user feedback |
-| **Support** | Know what users are saying and where to acknowledge or escalate |
-| **Leadership** | Quick weekly health pulse — scannable one-pager, no manual review digging |
-
-### What You Get
-
-- **Top themes** (max 5) with mention counts — what users care about most
-- **Real user quotes** — verbatim feedback grouped by theme
-- **Three action ideas** — concrete next steps inferred from reviews
-- **One-page weekly pulse** — ≤400 words, ready to share or email
-
-### Essential Points
-
-- **PII-free** — no usernames, emails, or IDs in any output
-- **INDMoney focus** — targets `in.indwealth` (Google Play)
-- **8 weeks, 100 reviews** — light, fast runs (no 5000-review batch)
-- **CLI + Web UI** — run locally, schedule via GitHub Actions, or deploy
+Transform Google Play Store reviews into actionable weekly insights — top themes, user quotes, action ideas, and fee explainer — for product, growth, support, and leadership teams.
 
 ---
 
-## URLs Reference
+## Live URLs
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| **Frontend (Vercel)** | https://app-review-insights-analyser.vercel.app | Web UI (View Report, Preview Email, Send Email) |
-| **Backend (Render)** | https://app-review-insights-analyser.onrender.com | FastAPI REST API |
-| **API Base** | https://app-review-insights-analyser.onrender.com/api | REST endpoints (status, report, email) |
-| **Local Web UI** | http://localhost:8000 | Single-page Web UI (`python run_web.py` or `.venv/bin/python run_web.py`) |
-| **Resend** | https://resend.com | Email API (Render free tier; SMTP blocked) |
-| **GitHub Gist** | https://gist.github.com | Report storage for View Report (Render free tier) |
+| **Frontend (Vercel)** | https://app-review-insights-analyser.vercel.app | Web UI: View Report, Preview Email, Send Email |
+| **Backend (Render)** | https://app-review-insights-analyser.onrender.com | FastAPI REST API (Docker) |
+| **API Base** | https://app-review-insights-analyser.onrender.com/api | REST endpoints |
+| **Health Check** | https://app-review-insights-analyser.onrender.com/api/health | Lightweight liveness probe |
+| **Debug (Fee Config)** | https://app-review-insights-analyser.onrender.com/api/debug/fee | Verify FEE_EXPLANATION_URL / EXIT_LOAD_VALUE on Render |
+| **Resend** | https://resend.com | Email delivery (used on Render; SMTP blocked on free tier) |
+| **GitHub Gist** | https://gist.github.com | Report storage for View Report (Render has ephemeral disk) |
+| **Google Doc** | [Combined Report](https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0) | Phase 8 MCP appends weekly pulse + fee |
 | **GitHub Actions** | .github/workflows/weekly-pulse.yml | Scheduler: Sunday 9:00 AM IST |
-| **Google Doc** | https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0 | Combined weekly pulse + fee explanation (Phase 8 MCP) |
-
-### API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | / | Web UI (HTML) |
-| `GET` | /api/status | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent) |
-| `GET` | /api/report | Latest weekly pulse (markdown; sample=1 for sample data) |
-| `GET` | /api/email/preview | Email preview HTML (sample=1 for sample data) |
-| `POST` | /api/email/send | Send latest report via Resend/SMTP |
-| `POST` | /api/upload/sync | Scheduler upload (report to backend; secured with REPORT_UPLOAD_SECRET) |
-
----
-
-## Deployment Architecture
-
-| Layer | Hosting | Notes |
-|-------|---------|-------|
-| **Backend** | **Render.com** | Docker; FastAPI + Uvicorn |
-| **Frontend** | **Vercel** | Static HTML/CSS/JS; `frontend/` root dir |
-| **Email** | Resend API | Required on Render (SMTP blocked on free tier) |
-| **Report Storage** | GitHub Gist | View Report on Render (ephemeral disk) |
+| **Local Web UI** | http://localhost:8000 | Run `python run_web.py` |
 
 ---
 
@@ -68,13 +26,44 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 | Layer | Technology |
 |-------|------------|
 | **Backend** | Python 3.11, FastAPI, Uvicorn |
-| **Frontend** | Static HTML/CSS/JS (vanilla) |
-| **AI/LLM** | Groq (themes, classification), Google Gemini (weekly note) |
+| **Frontend** | Static HTML/CSS/JS (vanilla, no framework) |
+| **AI/LLM** | Groq (theme discovery, classification), Google Gemini (weekly note generation) |
 | **Email** | Resend API (Render) or SMTP (local); DOCX attachment (python-docx) |
-| **Hosting** | **Render.com** (backend), **Vercel** (frontend) |
-| **Scheduler** | GitHub Actions — Sunday **9:00 AM IST** |
-| **Report Storage** | GitHub Gist |
-| **Phase 8** | MCP (google-docs-mcp-server) → Google Doc |
+| **Scraping** | google-play-scraper |
+| **Hosting** | Render.com (backend), Vercel (frontend) |
+| **Scheduler** | GitHub Actions — Sunday 9:00 AM IST |
+| **Report Storage** | GitHub Gist (persistent; Render free tier has ephemeral disk) |
+| **Phase 8** | MCP (google-docs-mcp-server) → append combined JSON to Google Doc |
+
+---
+
+## Third-Party Services
+
+| Service | Purpose | Required For |
+|---------|---------|--------------|
+| **Render.com** | Hosts backend (FastAPI + Uvicorn). Docker deploy. Free tier: ephemeral disk, SMTP blocked. | Backend API, status, report fetch, email send |
+| **Vercel** | Hosts frontend. Static HTML/CSS/JS. Proxies `/api/*` to Render. | Web UI |
+| **Resend** | Email API. Used on Render because SMTP ports are blocked on free tier. | Send Email (deployed) |
+| **GitHub Gist** | Stores `pulse.md` + `meta.json` from scheduler. Backend fetches for View Report when `REPORT_GIST_ID` set. | View Report on Render |
+| **Groq** | LLM for theme discovery and review classification (llama-3.3-70b-versatile). | Phases 2a, 2b |
+| **Google Gemini** | LLM for weekly note generation (gemini-1.5-flash). | Phase 3 |
+| **MCP (Google Docs)** | Appends combined weekly pulse + fee explanation to a Google Doc via `append_text` tool. | Phase 8 (optional) |
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Web UI (HTML) |
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/status` | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent, Fee, MCP) |
+| `GET` | `/api/report` | Latest weekly pulse (markdown; `?sample=1` for sample data) |
+| `GET` | `/api/email/preview` | Email preview HTML |
+| `POST` | `/api/email/send` | Send latest report via Resend/SMTP (DOCX attached) |
+| `GET` | `/api/email/send-status` | Poll send result |
+| `POST` | `/api/upload/sync` | Scheduler upload (secured with `X-Upload-Secret`) |
+| `GET` | `/api/debug/fee` | Debug fee config (no secrets) |
 
 ---
 
@@ -83,11 +72,11 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 - **Scrape** Google Play Store reviews (INDMoney `in.indwealth`)
 - **Discover themes** and classify reviews (Groq LLM)
 - **Generate weekly pulse** (Gemini LLM) — themes, quotes, actions
-- **Email delivery** — Resend API (deployed) or SMTP (local); Weekly Note + Fee section as DOCX attachment
+- **Fee explanation** (Phase 7) — exit load from `FEE_EXPLANATION_URL`; fallback with `EXIT_LOAD_VALUE` when fetch blocked
+- **Email delivery** — Resend API (deployed) or SMTP (local); Weekly Note + Fee section in body and DOCX attachment
 - **Web UI** — View report, preview email, send email
-- **Scheduler** — Weekly run at **9:00 AM IST** every Sunday (GitHub Actions)
+- **Scheduler** — Weekly run at 9:00 AM IST (GitHub Actions)
 - **View Report** — From Gist (synced) or sample data (checkbox)
-- **Phase 7** — Fee explanation (exit load from FEE_EXPLANATION_URL)
 - **Phase 8** — Combined JSON appended to Google Doc via MCP
 
 ---
@@ -108,64 +97,66 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 
 ---
 
+## Environment Variables (Reviewer Reference)
+
+| Variable | Purpose | Where |
+|----------|---------|-------|
+| `GROQ_API_KEY` | Groq LLM (themes, classification) | GitHub Secrets, Render |
+| `GEMINI_API_KEY` | Gemini (weekly note) | GitHub Secrets, Render |
+| `EMAIL_SENDER` | From address | .env, Render |
+| `EMAIL_RECIPIENT` | Default recipient | .env, Render |
+| `RESEND_API_KEY` | Resend API (required on Render) | Render |
+| `REPORT_GIST_ID` | Gist ID for View Report | GitHub Secrets, Render |
+| `GH_GIST_TOKEN` | PAT with `gist` scope (classic) | GitHub Secrets, Render |
+| `RENDER_URL` | Backend URL for sync upload | GitHub Secrets |
+| `REPORT_UPLOAD_SECRET` | Shared secret for sync | GitHub Secrets, Render |
+| `FEE_EXPLANATION_URL` | Fund page URL for fee section | Render |
+| `EXIT_LOAD_VALUE` | Fallback exit load when fetch fails | Render |
+| `GOOGLE_DOC_ID` | Target Google Doc (Phase 8) | .env, Render |
+| `MCP_GOOGLE_DOCS_USE_MCP` | Use MCP for Phase 8 | .env |
+
+---
+
 ## Project Structure
 
 ```
 app-review-insights-analyser/
-├── phase1_Data_Ingestion/           # Phase 1: Scrape reviews
-├── phase2a_Theme_Discovery/        # Phase 2a: Theme Discovery (Groq)
-├── phase2b_Review_Classification/  # Phase 2b: Classification (Groq)
-├── phase3_Weekly_Note_Generation/   # Phase 3: Weekly Note (Gemini)
-├── phase4_Email_Delivery/          # Phase 4: Email (Resend/SMTP)
-├── phase5_Orchestration_Web_UI/    # Phase 5: API + Web UI
-│   ├── api.py
-│   ├── pipeline.py
-│   └── static/                    # Static UI (synced to frontend/)
-├── phase6_Scheduler/               # Phase 6: GitHub Actions
-├── phase7_Fee_Explanation/         # Phase 7: Exit load / fee from URL
-├── phase8_Combined_JSON_Google_Doc_MCP/  # Phase 8: MCP → Google Doc
-├── frontend/                       # Vercel deployment
-│   ├── public/                    # index.html (build injects API_URL)
-│   └── vercel.json
-├── docs/                           # Documentation
-│   ├── DEPLOYMENT.md
-│   ├── LOCAL_RUN.md
-│   └── MCP_GOOGLE_DOCS_SETUP.md
-├── src/
-├── main.py
-├── run_web.py
-├── Dockerfile                      # Backend for Render
-├── render.yaml
-├── .github/workflows/
-└── scripts/
+├── phase1_Data_Ingestion/           # Scrape Google Play reviews
+├── phase2a_Theme_Discovery/         # Groq theme discovery
+├── phase2b_Review_Classification/   # Groq classification
+├── phase3_Weekly_Note_Generation/   # Gemini weekly note
+├── phase4_Email_Delivery/           # Resend/SMTP + DOCX
+├── phase5_Orchestration_Web_UI/    # FastAPI + pipeline + static UI
+├── phase6_Scheduler/               # GitHub Actions (Phases 1–3)
+├── phase7_Fee_Explanation/          # Exit load from FEE_EXPLANATION_URL
+├── phase8_Combined_JSON_Google_Doc_MCP/  # MCP → Google Doc
+├── frontend/                       # Vercel deploy (public/index.html)
+├── src/                            # Shared config, models, services
+├── docs/                           # DEPLOYMENT, LOCAL_RUN, MCP setup
+├── scripts/                        # upload_sync, seed_sample_data, sync_frontend
+├── main.py                         # CLI entry
+├── run_web.py                      # Web server
+├── Dockerfile                      # Render backend
+├── render.yaml                     # Render config
+└── .github/workflows/weekly-pulse.yml
 ```
 
 ---
 
 ## Quick Start
 
-### 1. Clone & Setup
-
 ```bash
-git clone <your-repo-url>
+git clone <repo-url>
 cd app-review-insights-analyser
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp .env.example .env
+# Edit .env: GROQ_API_KEY, GEMINI_API_KEY, EMAIL_SENDER, EMAIL_RECIPIENT
 mkdir -p data/reports data/drafts data/deliveries data/logs data/cache
-```
-
-### 2. Configure Environment
-
-Edit `.env` (see `.env.example`). Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, `EMAIL_SENDER`, `EMAIL_RECIPIENT`. For Render: `RESEND_API_KEY`. For View Report: `REPORT_GIST_ID`, `GH_GIST_TOKEN`.
-
-### 3. Run Locally
-
-```bash
 .venv/bin/python run_web.py
 ```
 
-Then open **http://localhost:8000**
+Open **http://localhost:8000**
 
 ---
 
@@ -174,7 +165,7 @@ Then open **http://localhost:8000**
 1. **View Report** — Latest weekly pulse (from Gist or local). Check "Use sample data" for sample.
 2. **Preview Email** — HTML preview (respects sample checkbox).
 3. **Send Email** — Send report via Resend (deployed) or SMTP (local); DOCX attached.
-4. **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Google Doc (MCP).
+4. **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Fee (email/doc), Google Doc (MCP).
 
 ---
 
@@ -183,12 +174,15 @@ Then open **http://localhost:8000**
 | Document | Description |
 |----------|-------------|
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Render + Vercel deployment |
-| [docs/LOCAL_RUN.md](docs/LOCAL_RUN.md) | Local development guide |
+| [docs/LOCAL_RUN.md](docs/LOCAL_RUN.md) | Local development |
 | [docs/MCP_GOOGLE_DOCS_SETUP.md](docs/MCP_GOOGLE_DOCS_SETUP.md) | Phase 8 MCP setup |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Phase details, design |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Phase details, design, API |
 
 ---
 
-## License
+## Recent Changes
 
-[Add your license here]
+- **Fee explainer** — Included in email body and DOCX; sanitized `FEE_EXPLANATION_URL` / `EXIT_LOAD_VALUE`; `EXIT_LOAD_VALUE` fallback when fetch blocked.
+- **Gist 401** — Token sanitization; retry without auth for public Gists.
+- **Debug endpoint** — `GET /api/debug/fee` to verify fee config on Render.
+- **UI status** — Fee (Configured / Not set) shown in status panel.
