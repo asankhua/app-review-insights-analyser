@@ -403,7 +403,7 @@
 
   <script>
     // Use same origin so API calls work when served from this server (e.g. http://localhost:8000)
-    const API = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+    const API = "";
 
     (function initTheme() {
       const stored = localStorage.getItem('theme');

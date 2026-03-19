@@ -6,8 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// API_URL: empty = same-origin (proxy). Non-empty = direct Render URL. Default direct for reliability.
-const apiUrl = (process.env.API_URL || 'https://app-review-insights-analyser.onrender.com').replace(/\/$/, '');
+// API_URL: empty = same-origin (Vercel rewrites proxy /api/* to Render). Set for direct Render URL if needed.
+const apiUrl = (process.env.API_URL || '').replace(/\/$/, '');
 const src = path.join(__dirname, 'public', 'index.html');
 const out = path.join(__dirname, 'public', 'index.html');
 
