@@ -6,8 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// On Vercel: use same-origin so /api/* is proxied (no CORS). Local: use Render URL.
-const apiUrl = (process.env.API_URL || '').replace(/\/$/, '') || '';
+// API_URL: empty = same-origin (proxy). Non-empty = direct Render URL. Default direct for reliability.
+const apiUrl = (process.env.API_URL || 'https://app-review-insights-analyser.onrender.com').replace(/\/$/, '');
 const src = path.join(__dirname, 'public', 'index.html');
 const out = path.join(__dirname, 'public', 'index.html');
 

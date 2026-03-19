@@ -403,7 +403,7 @@
 
   <script>
     // Use same origin so API calls work when served from this server (e.g. http://localhost:8000)
-    const API = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+    const API = "https://app-review-insights-analyser.onrender.com";
 
     (function initTheme() {
       const stored = localStorage.getItem('theme');
@@ -540,23 +540,38 @@
       }
     }
 
+    async function fetchWithRetry(url, retries) {
+      retries = retries || 3;
+      for (var i = 0; i < retries; i++) {
+        try {
+          var opts = {};
+          if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) opts.signal = AbortSignal.timeout(90000);
+          return await fetch(url, opts);
+        } catch (e) {
+          if (i === retries - 1) throw e;
+          if (i === 0) showMessage('Backend may be waking up. Retrying in 15s...', 'info');
+          await new Promise(function(r) { setTimeout(r, 15000); });
+        }
+      }
+    }
     async function loadReport() {
       setLoading(true);
       hideMessage();
       try {
         var useSample = document.getElementById('useSample').checked;
         var reportRes, statusRes;
+        var base = (API || '').replace(/\/$/, '') || window.location.origin;
+        var reportUrl = base + '/api/report' + (useSample ? '?sample=1' : '');
+        var statusUrl = base + '/api/status';
         try {
-          var fetchOpts = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout)
-            ? { signal: AbortSignal.timeout(60000) } : {};
           [reportRes, statusRes] = await Promise.all([
-            fetch(API + '/api/report' + (useSample ? '?sample=1' : ''), fetchOpts),
-            fetch(API + '/api/status', fetchOpts),
+            fetchWithRetry(reportUrl),
+            fetchWithRetry(statusUrl),
           ]);
         } catch (fetchErr) {
           var hint = '';
-          if (/failed to fetch|load failed|networkerror/i.test(fetchErr.message || '')) {
-            hint = ' Backend may be starting (Render free tier). Wait 30s and try again. Check CORS_ORIGINS includes your Vercel URL.';
+          if (/failed to fetch|load failed|networkerror|timeout|abort/i.test((fetchErr.message || '').toLowerCase())) {
+            hint = ' Render may be starting (free tier wakes in 30-60s). Wait 1 min, refresh, try again. Ensure CORS_ORIGINS includes https://app-review-insights-analyser.vercel.app';
           }
           showMessage((fetchErr.message || 'Failed to load report') + hint, 'error');
           return;
