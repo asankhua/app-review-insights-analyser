@@ -1,6 +1,7 @@
 """
 Phase 5: FastAPI REST API for Web UI.
 Run with: python run_web.py or uvicorn phase5_Orchestration_Web_UI.api:app --reload --port 8000
+Backend: Render.com | Frontend: Vercel
 """
 import os
 from pathlib import Path
