@@ -216,26 +216,33 @@ class EmailDeliveryService:
             # Fee section for body and attachment (always include when FEE_EXPLANATION_URL set; else use placeholder if fetch failed)
             fee_section_plain = ""
             fee_section_html = ""
+            fee_url = (os.environ.get("FEE_EXPLANATION_URL") or getattr(self.config, "FEE_EXPLANATION_URL", None) or "").strip()
+            if fee_explanation is None and fee_url:
+                try:
+                    from phase7_Fee_Explanation import get_fee_explanation
+                    fee_explanation = get_fee_explanation(report_date=date.today(), fee_url=fee_url, save_to_reports=False)
+                except Exception as e:
+                    logger.debug("Fee fetch in _create_email_message: %s", e)
             if fee_explanation is not None and hasattr(fee_explanation, "to_email_section_plain"):
                 fee_section_plain = "\n\n---\n\n" + fee_explanation.to_email_section_plain()
                 fee_section_html = fee_explanation.to_email_section_html()
-            else:
-                fee_url = os.environ.get("FEE_EXPLANATION_URL", "").strip()
-                if fee_url:
-                    fee_section_plain = (
-                        "\n\n---\n\nFee Explanation\n"
-                        "This section could not be fetched automatically. "
-                        "For exit load, expense ratio and other charges, refer to the fund page:\n"
-                        + fee_url
-                    )
-                    fee_section_html = (
-                        '<div class="section">'
-                        '<h2>Fee Explanation</h2>'
-                        '<p>This section could not be fetched automatically. '
-                        'For exit load, expense ratio and other charges, please refer to the fund page below.</p>'
-                        f'<p><a href="{fee_url}">View fund page (exit load &amp; expense ratio)</a></p>'
-                        '</div>'
-                    )
+            elif fee_url:
+                fee_section_plain = (
+                    "\n\n---\n\nFee Explanation\n"
+                    "This section could not be fetched automatically. "
+                    "For exit load, expense ratio and other charges, refer to the fund page:\n"
+                    + fee_url
+                )
+                fee_section_html = (
+                    '<div class="section">'
+                    '<h2>Fee Explanation</h2>'
+                    '<p>This section could not be fetched automatically. '
+                    'For exit load, expense ratio and other charges, please refer to the fund page below.</p>'
+                    f'<p><a href="{fee_url}">View fund page (exit load &amp; expense ratio)</a></p>'
+                    '</div>'
+                )
+            elif not fee_section_plain:
+                logger.info("Fee section omitted: FEE_EXPLANATION_URL not set in environment (add it on Render for fee in email/DOCX)")
             
             # Attach filename (always .docx)
             attach_filename = (
