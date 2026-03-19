@@ -13,13 +13,23 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY . .
 
-# Create data directories and seed sample data (View Report fallback)
+# Create data dirs. Copy repo data to /app/data_repo (mount overlays /app/data at runtime)
 RUN mkdir -p data/reviews data/reports data/drafts data/deliveries data/logs data/cache
 COPY sample_data/pulse-2025-01-01.md data/reports/
-RUN python scripts/seed_sample_data.py 2>/dev/null || true && \
-    python -c "from datetime import datetime; from zoneinfo import ZoneInfo; open('data/logs/last_run.txt','w').write(datetime.now(ZoneInfo('Asia/Kolkata')).isoformat())"
+# Bundle repo data for seeding when Render disk is empty (mount overlays image's data/)
+COPY data/ /app/data_repo/
+RUN python scripts/seed_sample_data.py 2>/dev/null || true
 
 EXPOSE 8000
 
-# Render: PORT injected at runtime. Init: seed sample if no pulse (scheduler upload replaces)
-CMD sh -c 'mkdir -p data/reports data/reviews data/logs && (find data/reports -maxdepth 1 -name "pulse-*.md" 2>/dev/null | grep -q . || (python scripts/seed_sample_data.py 2>/dev/null || true && cp sample_data/pulse-2025-01-01.md data/reports/)); uvicorn phase5_Orchestration_Web_UI.api:app --host 0.0.0.0 --port ${PORT:-8000}'
+# Render: seed from repo when mount empty, then start server
+CMD sh -c 'mkdir -p data/reports data/reviews data/logs && \
+  if ! find data/reports -maxdepth 1 -name "pulse-*.md" 2>/dev/null | grep -q .; then \
+    if [ -d /app/data_repo/reports ] && [ -n "$(ls -A /app/data_repo/reports 2>/dev/null)" ]; then \
+      cp -r /app/data_repo/reports/* data/reports/ 2>/dev/null || true; \
+      cp -r /app/data_repo/logs/* data/logs/ 2>/dev/null || true; \
+    else \
+      python scripts/seed_sample_data.py 2>/dev/null || true; cp sample_data/pulse-2025-01-01.md data/reports/ 2>/dev/null || true; \
+    fi; \
+  fi; \
+  uvicorn phase5_Orchestration_Web_UI.api:app --host 0.0.0.0 --port ${PORT:-8000}'

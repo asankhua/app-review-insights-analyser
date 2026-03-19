@@ -545,22 +545,44 @@
       hideMessage();
       try {
         var useSample = document.getElementById('useSample').checked;
-        const [reportRes, statusRes] = await Promise.all([
-          fetch(API + '/api/report' + (useSample ? '?sample=1' : '')),
-          fetch(API + '/api/status'),
-        ]);
+        var reportRes, statusRes;
+        try {
+          var fetchOpts = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout)
+            ? { signal: AbortSignal.timeout(60000) } : {};
+          [reportRes, statusRes] = await Promise.all([
+            fetch(API + '/api/report' + (useSample ? '?sample=1' : ''), fetchOpts),
+            fetch(API + '/api/status', fetchOpts),
+          ]);
+        } catch (fetchErr) {
+          var hint = '';
+          if (/failed to fetch|load failed|networkerror/i.test(fetchErr.message || '')) {
+            hint = ' Backend may be starting (Render free tier). Wait 30s and try again. Check CORS_ORIGINS includes your Vercel URL.';
+          }
+          showMessage((fetchErr.message || 'Failed to load report') + hint, 'error');
+          return;
+        }
         if (statusRes.ok) {
           var statusData = await statusRes.json();
           updateStatusPanel(statusData);
         }
+        var ct = reportRes.headers.get('content-type') || '';
         if (!reportRes.ok) {
-          const err = await reportRes.json().catch(() => ({}));
-          const msg = err.detail || 'No report found.';
+          var msg = 'No report found.';
+          if (ct.includes('json')) {
+            try {
+              var err = await reportRes.json();
+              msg = (typeof err.detail === 'string' ? err.detail : err.detail?.msg) || msg;
+            } catch (_) {}
+          }
           showMessage(msg, 'info');
           reportCard.style.display = 'none';
           return;
         }
-        const d = await reportRes.json();
+        if (!ct.includes('json')) {
+          showMessage('Backend returned non-JSON. It may be starting up. Wait 30s and try again.', 'error');
+          return;
+        }
+        var d = await reportRes.json();
         reportContent.textContent = d.content || '';
         reportCard.style.display = 'block';
       } catch (e) {

@@ -7,8 +7,10 @@ __pycache__
 .env
 .env.*
 !.env.example
-data/*
-!data/.gitkeep
+# data/* excluded except reports/logs/reviews (used for Render seed)
+data/cache
+data/deliveries
+data/drafts
 *.log
 .pytest_cache
 .coverage
