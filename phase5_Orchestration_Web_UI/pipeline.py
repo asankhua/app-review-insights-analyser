@@ -619,13 +619,13 @@ def send_email(recipient: Optional[str] = None) -> dict:
         report_date_val = _get_latest_report_date() or date.today()
         fee_explanation = _load_saved_fee_explanation(report_date_val)
         if fee_explanation is None:
-            try:
-                from phase7_Fee_Explanation import get_fee_explanation
-                from src.config.settings import Config
-                fee_url = getattr(Config, "FEE_EXPLANATION_URL", None) or os.environ.get("FEE_EXPLANATION_URL", "").strip()
-                fee_explanation = get_fee_explanation(report_date=report_date_val, fee_url=fee_url or None, save_to_reports=False)
-            except Exception:
-                pass
+            fee_url = os.environ.get("FEE_EXPLANATION_URL", "").strip()
+            if fee_url:
+                try:
+                    from phase7_Fee_Explanation import get_fee_explanation
+                    fee_explanation = get_fee_explanation(report_date=report_date_val, fee_url=fee_url, save_to_reports=False)
+                except Exception as e:
+                    logger.warning("Fee explanation fetch for email failed: %s", e)
         svc = EmailDeliveryService()
         response = svc.deliver_weekly_note(
             weekly_note_content=content,

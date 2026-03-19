@@ -94,6 +94,16 @@ class EmailDeliveryService:
             recipient = recipient_email or self.config.EMAIL_RECIPIENT or "team@indmoney.com"
             recipient_display_name = recipient_name or "Team"
             
+            # Fee: retry fetch if pipeline passed None but FEE_EXPLANATION_URL is set
+            if fee_explanation is None:
+                fee_url = (os.environ.get("FEE_EXPLANATION_URL") or getattr(self.config, "FEE_EXPLANATION_URL", None) or "").strip()
+                if fee_url:
+                    try:
+                        from phase7_Fee_Explanation import get_fee_explanation
+                        fee_explanation = get_fee_explanation(report_date=date.today(), fee_url=fee_url, save_to_reports=False)
+                    except Exception as e:
+                        logger.warning("Fee explanation fetch in email_delivery failed: %s", e)
+            
             # Generate email content (pass content for attachment when path empty, e.g. from Gist)
             email_message = self._create_email_message(
                 weekly_note_content=weekly_note_content,
