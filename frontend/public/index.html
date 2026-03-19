@@ -359,6 +359,10 @@
           <label>Google Doc (MCP)</label>
           <span class="value" id="mcpStatusMessage"></span>
         </div>
+        <div class="status-item" id="feeStatusRow">
+          <label>Fee (email/doc)</label>
+          <span class="value" id="feeStatusMessage">—</span>
+        </div>
       </div>
     </div>
 
@@ -403,7 +407,7 @@
 
   <script>
     // Use same origin so API calls work when served from this server (e.g. http://localhost:8000)
-    const API = "";
+    const API = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
 
     (function initTheme() {
       const stored = localStorage.getItem('theme');
@@ -494,6 +498,8 @@
       lastRunEl.textContent = latestRun ? formatIST(latestRun) : 'Never';
       lastRunEl.title = s.gist_unavailable ? 'Gist configured but unreachable. Check GH_GIST_TOKEN and REPORT_GIST_ID.' : '';
       document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
+      var feeEl = document.getElementById('feeStatusMessage');
+      if (feeEl) feeEl.textContent = s.fee_url_configured ? 'Configured' : 'Not set';
       var mcpRow = document.getElementById('mcpStatusRow');
       var mcpMsg = document.getElementById('mcpStatusMessage');
       if (s.mcp_append_message) {

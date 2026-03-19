@@ -194,20 +194,34 @@ def _fetch_from_gist() -> Optional[dict]:
         return _gist_cache
     try:
         import urllib.request
-        headers = {
+        from urllib.error import HTTPError
+        base_headers = {
             "Accept": "application/vnd.github+json",
             "User-Agent": "App-Review-Insights/1.0",
         }
-        token = os.environ.get("GH_GIST_TOKEN", "").strip()
+        # Sanitize token (Render env can add quotes/newlines when pasting)
+        token = (os.environ.get("GH_GIST_TOKEN") or "").strip().strip('"').strip("'").strip()
         if token:
-            headers["Authorization"] = f"Bearer {token}"
-        req = urllib.request.Request(
-            f"https://api.github.com/gists/{gist_id}",
-            headers=headers,
-            method="GET",
-        )
-        with urllib.request.urlopen(req, timeout=5) as r:
-            data = json.loads(r.read().decode())
+            base_headers["Authorization"] = f"Bearer {token}"
+        url = f"https://api.github.com/gists/{gist_id}"
+
+        def _do_fetch(use_auth: bool):
+            h = dict(base_headers)
+            if not use_auth and "Authorization" in h:
+                del h["Authorization"]
+            req = urllib.request.Request(url, headers=h, method="GET")
+            with urllib.request.urlopen(req, timeout=10) as r:
+                return json.loads(r.read().decode())
+
+        try:
+            data = _do_fetch(use_auth=bool(token))
+        except HTTPError as he:
+            # If 401 with token, retry without (public Gists work unauthenticated)
+            if he.code == 401 and token:
+                logger.info("Gist 401 with token; retrying without auth (public Gist fallback)")
+                data = _do_fetch(use_auth=False)
+            else:
+                raise
         files = data.get("files", {})
         # Support exact filename or GitHub's optional 'filename' variant
         pulse = files.get("pulse.md") or files.get("pulse")
@@ -351,6 +365,7 @@ def _get_status() -> dict:
         "pipeline_error": _pipeline_state["error"],
         "mcp_append_success": None,
         "mcp_append_message": None,
+        "fee_url_configured": bool((os.environ.get("FEE_EXPLANATION_URL") or "").strip()),
     }
     try:
         mcp_path = PROJECT_ROOT / "data" / "logs" / "mcp_last.json"
@@ -617,21 +632,21 @@ def send_email(recipient: Optional[str] = None) -> dict:
         from datetime import date
         content = get_latest_report()
         report_date_val = _get_latest_report_date() or date.today()
+        fee_url = (os.environ.get("FEE_EXPLANATION_URL") or "").strip().strip('"').strip("'")
         fee_explanation = _load_saved_fee_explanation(report_date_val)
-        if fee_explanation is None:
-            fee_url = os.environ.get("FEE_EXPLANATION_URL", "").strip()
-            if fee_url:
-                try:
-                    from phase7_Fee_Explanation import get_fee_explanation
-                    fee_explanation = get_fee_explanation(report_date=report_date_val, fee_url=fee_url, save_to_reports=False)
-                except Exception as e:
-                    logger.warning("Fee explanation fetch for email failed: %s", e)
+        if fee_explanation is None and fee_url:
+            try:
+                from phase7_Fee_Explanation import get_fee_explanation
+                fee_explanation = get_fee_explanation(report_date=report_date_val, fee_url=fee_url, save_to_reports=False)
+            except Exception as e:
+                logger.warning("Fee explanation fetch for email failed: %s", e)
         svc = EmailDeliveryService()
         response = svc.deliver_weekly_note(
             weekly_note_content=content,
             recipient_email=recipient,
             mode=EmailMode.SEND,
             fee_explanation=fee_explanation,
+            fee_url=fee_url or None,
         )
         if response.status.value == "sent" and response.sent_at:
             try:

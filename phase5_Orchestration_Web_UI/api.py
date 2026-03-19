@@ -156,6 +156,42 @@ async def api_health():
     return {"ok": True, "status": "up"}
 
 
+@app.get("/api/debug/fee")
+async def api_debug_fee():
+    """
+    Debug fee explainer config. Use to verify FEE_EXPLANATION_URL/EXIT_LOAD_VALUE are set on Render.
+    Returns only non-sensitive status; no secrets.
+    """
+    def _check():
+        fee_url = (os.environ.get("FEE_EXPLANATION_URL") or "").strip().strip('"').strip("'")
+        exit_load = (os.environ.get("EXIT_LOAD_VALUE") or "").strip().strip('"').strip("'")
+        fee_url_configured = bool(fee_url)
+        exit_load_configured = bool(exit_load)
+        fee_explanation_result = None
+        fee_fetch_ok = False
+        if fee_url:
+            try:
+                from phase7_Fee_Explanation import get_fee_explanation
+                from datetime import date
+                result = get_fee_explanation(report_date=date.today(), fee_url=fee_url, save_to_reports=False)
+                fee_explanation_result = "fetched" if result is not None else "none"
+                fee_fetch_ok = result is not None
+            except Exception as e:
+                fee_explanation_result = f"error: {str(e)[:80]}"
+        return {
+            "fee_url_configured": fee_url_configured,
+            "exit_load_configured": exit_load_configured,
+            "fee_explanation_attempted": fee_url_configured,
+            "fee_explanation_result": fee_explanation_result,
+            "fee_fetch_ok": fee_fetch_ok,
+            "hint": "If fee_url_configured is false, add FEE_EXPLANATION_URL to Render env and redeploy.",
+        }
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_check), timeout=25.0)
+    except asyncio.TimeoutError:
+        return {"fee_url_configured": None, "error": "Fee check timed out (fund page may be slow or blocked)"}
+
+
 @app.get("/api/status")
 async def api_status(background_tasks: BackgroundTasks):
     """Return status from cache or fetch fresh (avoid minimal stub so Synced Pipeline date is correct)."""

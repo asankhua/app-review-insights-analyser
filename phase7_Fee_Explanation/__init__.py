@@ -31,7 +31,7 @@ def _fallback_fee_result(url: str, report_date: date, exit_load_override: Option
                 break
     except Exception:
         pass
-    value = (exit_load_override or os.environ.get("EXIT_LOAD_VALUE", "") or "").strip() or None
+    value = (exit_load_override or os.environ.get("EXIT_LOAD_VALUE", "") or "").strip().strip('"').strip("'") or None
     if value:
         logger.info("Using EXIT_LOAD_VALUE from env for fee section (fetch failed or blocked).")
     if value:
@@ -77,7 +77,7 @@ def get_fee_explanation(
     If FEE_EXPLANATION_URL is unset or fetch/parse fails, returns None and logs a warning.
     """
     import os
-    url = fee_url or os.environ.get("FEE_EXPLANATION_URL", "").strip()
+    url = (fee_url or os.environ.get("FEE_EXPLANATION_URL", "") or "").strip().strip('"').strip("'")
     if not url:
         logger.info("FEE_EXPLANATION_URL not set; skipping fee explanation.")
         return None

@@ -60,6 +60,7 @@ class EmailDeliveryService:
         include_attachments: bool = True,
         custom_subject: Optional[str] = None,
         fee_explanation: Optional[Any] = None,
+        fee_url: Optional[str] = None,
     ) -> EmailDeliveryResponse:
         """
         Deliver weekly note via email
@@ -94,15 +95,15 @@ class EmailDeliveryService:
             recipient = recipient_email or self.config.EMAIL_RECIPIENT or "team@indmoney.com"
             recipient_display_name = recipient_name or "Team"
             
-            # Fee: retry fetch if pipeline passed None but FEE_EXPLANATION_URL is set
-            if fee_explanation is None:
-                fee_url = (os.environ.get("FEE_EXPLANATION_URL") or getattr(self.config, "FEE_EXPLANATION_URL", None) or "").strip()
-                if fee_url:
-                    try:
-                        from phase7_Fee_Explanation import get_fee_explanation
-                        fee_explanation = get_fee_explanation(report_date=date.today(), fee_url=fee_url, save_to_reports=False)
-                    except Exception as e:
-                        logger.warning("Fee explanation fetch in email_delivery failed: %s", e)
+            # Fee: use fee_url from pipeline; fallback to env if not passed
+            if not fee_url:
+                fee_url = (os.environ.get("FEE_EXPLANATION_URL") or getattr(self.config, "FEE_EXPLANATION_URL", None) or "").strip().strip('"').strip("'")
+            if fee_explanation is None and fee_url:
+                try:
+                    from phase7_Fee_Explanation import get_fee_explanation
+                    fee_explanation = get_fee_explanation(report_date=date.today(), fee_url=fee_url, save_to_reports=False)
+                except Exception as e:
+                    logger.warning("Fee explanation fetch in email_delivery failed: %s", e)
             
             # Generate email content (pass content for attachment when path empty, e.g. from Gist)
             email_message = self._create_email_message(
@@ -114,6 +115,7 @@ class EmailDeliveryService:
                 weekly_note_path=weekly_note_path,
                 weekly_note_content_for_attach=weekly_note_content if not weekly_note_path else None,
                 fee_explanation=fee_explanation,
+                fee_url=fee_url,
             )
             
             # Send email
@@ -204,6 +206,7 @@ class EmailDeliveryService:
         weekly_note_path: str,
         weekly_note_content_for_attach: Optional[str] = None,
         fee_explanation: Optional[Any] = None,
+        fee_url: Optional[str] = None,
     ) -> EmailMessage:
         """Create email message with formatted content"""
         try:
@@ -213,10 +216,10 @@ class EmailDeliveryService:
             # Create email subject: INDMoney Weekly Pulse + Fee Explainer -- March 09 - March 15
             subject = custom_subject or f"INDMoney Weekly Pulse + Fee Explainer -- {week_date}"
             
-            # Fee section for body and attachment (always include when FEE_EXPLANATION_URL set; else use placeholder if fetch failed)
+            # Fee section for body and attachment (always include when fee_url set; else use placeholder if fetch failed)
             fee_section_plain = ""
             fee_section_html = ""
-            fee_url = (os.environ.get("FEE_EXPLANATION_URL") or getattr(self.config, "FEE_EXPLANATION_URL", None) or "").strip()
+            fee_url = (fee_url or os.environ.get("FEE_EXPLANATION_URL") or getattr(self.config, "FEE_EXPLANATION_URL", None) or "").strip().strip('"').strip("'")
             if fee_explanation is None and fee_url:
                 try:
                     from phase7_Fee_Explanation import get_fee_explanation
@@ -226,6 +229,7 @@ class EmailDeliveryService:
             if fee_explanation is not None and hasattr(fee_explanation, "to_email_section_plain"):
                 fee_section_plain = "\n\n---\n\n" + fee_explanation.to_email_section_plain()
                 fee_section_html = fee_explanation.to_email_section_html()
+                logger.info("Fee section added from fee_explanation (email body + DOCX)")
             elif fee_url:
                 fee_section_plain = (
                     "\n\n---\n\nFee Explanation\n"
@@ -241,7 +245,8 @@ class EmailDeliveryService:
                     f'<p><a href="{fee_url}">View fund page (exit load &amp; expense ratio)</a></p>'
                     '</div>'
                 )
-            elif not fee_section_plain:
+                logger.info("Fee section added from fee_url fallback (fetch failed or blocked; email body + DOCX)")
+            else:
                 logger.info("Fee section omitted: FEE_EXPLANATION_URL not set in environment (add it on Render for fee in email/DOCX)")
             
             # Attach filename (always .docx)

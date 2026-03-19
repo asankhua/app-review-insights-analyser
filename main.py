@@ -263,13 +263,17 @@ def run_phase4_email(args, fee_explanation=None):
         from phase4_Email_Delivery.models.email import EmailMode
         mode = EmailMode.SEND if args.send else EmailMode.DRY_RUN
         
-        # Deliver email (fee section included when fee_explanation is provided)
+        # Fee: pass fee_url so email always gets fee section when FEE_EXPLANATION_URL is set
+        fee_url = (os.environ.get("FEE_EXPLANATION_URL") or "").strip().strip('"').strip("'")
+        
+        # Deliver email (fee section included when fee_explanation or fee_url is provided)
         response = email_service.deliver_weekly_note(
             recipient_email=args.recipient,
             recipient_name=args.recipient_name,
             mode=mode,
             include_attachments=True,
             fee_explanation=fee_explanation,
+            fee_url=fee_url or None,
         )
         
         # Display results
