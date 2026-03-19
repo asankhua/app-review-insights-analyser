@@ -77,8 +77,8 @@ _minimal_status = {
 # CORS for Vercel frontend (and localhost for dev)
 _DEFAULT_ORIGINS = "http://localhost:8000,http://localhost:3000,https://app-review-insights-analyser.vercel.app"
 ALLOWED_ORIGINS = [x.strip() for x in os.environ.get("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",") if x.strip()]
-# Regex allows any Vercel deployment (preview URLs, etc.)
-_VERCEL_ORIGIN_REGEX = r"https://[a-zA-Z0-9-]+\.vercel\.app"
+# Regex allows any Vercel deployment (main + preview URLs like xyz-abc123-def.vercel.app)
+_VERCEL_ORIGIN_REGEX = r"https://[^/]*\.vercel\.app"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -86,6 +86,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Use absolute path so "/" works regardless of server cwd (e.g. uvicorn --reload)
@@ -147,6 +148,12 @@ def _refresh_status_cache_sync() -> None:
 async def _refresh_status_background() -> None:
     """Run get_status in a thread so the event loop is not blocked."""
     await asyncio.to_thread(_refresh_status_cache_sync)
+
+
+@app.get("/api/health")
+async def api_health():
+    """Lightweight health check (no pipeline deps). Use to verify backend is up and CORS works."""
+    return {"ok": True, "status": "up"}
 
 
 @app.get("/api/status")
