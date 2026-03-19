@@ -30,3 +30,5 @@ services:
         sync: false  # Gist ID for View Report (ephemeral disk)
       - key: GH_GIST_TOKEN
         sync: false  # PAT with gist scope
+      - key: FEE_EXPLANATION_URL
+        sync: false  # Phase 7: fund page URL for exit load / fee (optional)

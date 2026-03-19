@@ -186,6 +186,14 @@ async def api_report(sample: bool = False):
         content = get_report(use_sample=sample)
         if content is None:
             status = get_status()
+            # Fallback to sample when Gist configured but unreachable (avoids hard error)
+            if not sample and status.get("gist_unavailable"):
+                content = get_report(use_sample=True)
+                if content:
+                    return {
+                        "content": content,
+                        "fallback_warning": "Gist unreachable. Showing sample data. Add REPORT_GIST_ID and GH_GIST_TOKEN to Render Environment for live reports.",
+                    }
             detail = "No report found. Run pipeline first."
             if not os.environ.get("REPORT_GIST_ID"):
                 detail = "Add REPORT_GIST_ID to Render env (Gist ID from workflow log). See docs/DEPLOYMENT.md §7."
@@ -205,8 +213,15 @@ async def api_report(sample: bool = False):
 async def api_email_preview(sample: bool = False):
     """Get email preview (HTML) as it would appear in inbox. sample=1: use sample data (matches View Report checkbox)."""
     def _fetch_preview():
-        from phase5_Orchestration_Web_UI.pipeline import get_email_preview
-        return get_email_preview(use_sample=sample)
+        from phase5_Orchestration_Web_UI.pipeline import get_email_preview, get_status
+        preview = get_email_preview(use_sample=sample)
+        if preview is None and not sample:
+            status = get_status()
+            if status.get("gist_unavailable"):
+                preview = get_email_preview(use_sample=True)
+                if preview and isinstance(preview, dict):
+                    preview["fallback_warning"] = "Gist unreachable. Showing sample. Add REPORT_GIST_ID and GH_GIST_TOKEN for live reports."
+        return preview
     try:
         preview = await asyncio.wait_for(asyncio.to_thread(_fetch_preview), timeout=15.0)
     except asyncio.TimeoutError:

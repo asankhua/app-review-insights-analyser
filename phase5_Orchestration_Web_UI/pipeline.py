@@ -467,7 +467,7 @@ def get_email_preview(use_sample: bool = False) -> Optional[dict]:
                 break
 
         weekly_note_html = format_markdown_to_html(content)
-        # Add fee section if available (don't fail preview if fee loading fails)
+        # Add fee section (don't fail preview if fee loading fails)
         try:
             report_date_val = _get_latest_report_date() or date.today()
             fee_explanation = _load_saved_fee_explanation(report_date_val)
@@ -482,6 +482,19 @@ def get_email_preview(use_sample: bool = False) -> Optional[dict]:
                     pass
             if fee_explanation is not None and hasattr(fee_explanation, "to_email_section_html"):
                 weekly_note_html = weekly_note_html + "\n" + fee_explanation.to_email_section_html()
+            else:
+                # Fallback when FEE_EXPLANATION_URL is set but fetch failed (match email_delivery behavior)
+                fee_url = os.environ.get("FEE_EXPLANATION_URL", "").strip()
+                if fee_url:
+                    fee_section_html = (
+                        '<div class="section">'
+                        '<h2>Fee Explanation</h2>'
+                        '<p>This section could not be fetched automatically. '
+                        'For exit load, expense ratio and other charges, please refer to the fund page below.</p>'
+                        f'<p><a href="{fee_url}">View fund page (exit load &amp; expense ratio)</a></p>'
+                        '</div>'
+                    )
+                    weekly_note_html = weekly_note_html + "\n" + fee_section_html
         except Exception as fee_err:
             logger.debug("Fee section skipped for email preview: %s", fee_err)
 

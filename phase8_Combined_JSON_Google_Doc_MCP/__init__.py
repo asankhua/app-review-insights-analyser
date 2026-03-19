@@ -5,6 +5,7 @@ otherwise skips append and optionally still writes combined-YYYY-MM-DD.json.
 """
 import json
 import logging
+import os
 from datetime import date
 from pathlib import Path
 from typing import Optional, Tuple
@@ -51,6 +52,13 @@ def run_phase8(
         explanation_bullets = list(getattr(fee_explanation, "explanation_bullets", []) or [])
         source_links = list(getattr(fee_explanation, "source_links", []) or [])
         last_checked = getattr(fee_explanation, "last_checked", "") or ""
+    else:
+        # Fallback when FEE_EXPLANATION_URL is set but fetch failed
+        fee_url = os.environ.get("FEE_EXPLANATION_URL", "").strip()
+        if fee_url:
+            fee_scenario = "Refer to fund page (fetch failed)"
+            explanation_bullets = ["For exit load, expense ratio and other charges, see the fund page link below."]
+            source_links = [fee_url]
 
     payload = build_combined_payload(
         report_date=report_date,
