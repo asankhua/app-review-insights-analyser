@@ -25,6 +25,8 @@ PROJECT_ROOT = Path(__file__).parent.parent
 # Cache for Gist fetch (avoids repeated API calls). TTL 60s.
 _gist_cache: dict[str, Any] = {}
 _GIST_CACHE_TTL = 60
+# Last Gist fetch error (for debugging when gist_unavailable)
+_gist_last_error: Optional[str] = None
 
 
 def _clear_gist_cache() -> None:
@@ -237,9 +239,24 @@ def _fetch_from_gist() -> Optional[dict]:
                 "_ts": now, "content": content, "last_run": last_run,
                 "report_date": report_date, "has_report": True,
             })
+            global _gist_last_error
+            _gist_last_error = None
             return _gist_cache
+        global _gist_last_error
+        _gist_last_error = f"Gist has no pulse.md content"
         logger.warning("Gist %s has no pulse.md content", gist_id)
     except Exception as e:
+        global _gist_last_error
+        err_msg = str(e)
+        try:
+            from urllib.error import HTTPError, URLError
+            if isinstance(e, HTTPError):
+                err_msg = f"HTTP {e.code}: {e.reason}"
+            elif isinstance(e, URLError):
+                err_msg = f"Connection: {e.reason}"
+        except ImportError:
+            pass
+        _gist_last_error = err_msg
         logger.warning("Gist fetch failed (id=%s): %s", gist_id, e)
         # Return stale cache so Scheduler Run date never disappears on transient failure
         if _gist_cache and (_gist_cache.get("content") or _gist_cache.get("last_run")):
@@ -326,6 +343,7 @@ def _get_status() -> dict:
             Path(local_path).stem.replace("pulse-", "") if local_path and has_local else None
         ),
         "gist_unavailable": gist_configured and (gist is None),
+        "gist_error": _gist_last_error if (gist_configured and gist is None) else None,
         "last_scraped": None,
         "last_synced": last_run,
         "last_email_sent": _get_last_email_sent(),

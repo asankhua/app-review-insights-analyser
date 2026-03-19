@@ -190,10 +190,13 @@ async def api_report(sample: bool = False):
             if not os.environ.get("REPORT_GIST_ID"):
                 detail = "Add REPORT_GIST_ID to Render env (Gist ID from workflow log). See docs/DEPLOYMENT.md §7."
             elif status.get("gist_unavailable"):
+                gist_err = status.get("gist_error", "")
                 detail = (
                     "Gist unreachable. Add REPORT_GIST_ID and GH_GIST_TOKEN to Render Environment. "
                     "Also add RENDER_URL and REPORT_UPLOAD_SECRET to GitHub Secrets so the sync uploads reports."
                 )
+                if gist_err:
+                    detail += f" Error: {gist_err}"
             elif status.get("scheduler_run"):
                 detail = "Report from last sync unavailable. Check Gist has pulse.md and meta.json."
             raise HTTPException(status_code=404, detail=detail)
