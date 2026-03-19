@@ -20,10 +20,11 @@
    - `EMAIL_SENDER`
    - `EMAIL_RECIPIENT`
    - `CORS_ORIGINS` = `https://your-frontend.vercel.app` (add after deploying frontend)
-   - **Email (Render free tier):** Add `RESEND_API_KEY` — [resend.com](https://resend.com) free tier, works on Render (SMTP blocked). Use `EMAIL_SENDER` with a [verified domain](https://resend.com/domains).
+   - **Email (Render free tier):** Add `RESEND_API_KEY` — [resend.com](https://resend.com) → API Keys → Create. Copy the key (starts with `re_`); paste in Render with no extra spaces/newlines. Use `EMAIL_SENDER` (e.g. `onboarding@resend.dev`) and `EMAIL_RECIPIENT` = your Resend account email (testing mode) or a [verified domain](https://resend.com/domains).
    - **Email (local):** Use `EMAIL_SENDER` + `EMAIL_PASSWORD` (SMTP). No Resend needed.
    - **Scheduler → Render sync:** Add `REPORT_UPLOAD_SECRET` (shared with GitHub Secrets) so the scheduler can upload the report.
    - **View Report on Render free tier (no persistent disk):** Use a GitHub Gist for storage. See §7.
+   - **Fee section in preview/email:** Add `FEE_EXPLANATION_URL` (fund page, e.g. INDMoney). If the page blocks fetch (403), add `EXIT_LOAD_VALUE` (e.g. `1% if redeemed within 1 year`).
    - **Email attachment:** Weekly Note is attached as DOCX (Resend supports attachments).
 5. Deploy. **Backend URL:** `https://app-review-insights-analyser.onrender.com`
 

@@ -493,7 +493,7 @@ def get_email_preview(use_sample: bool = False) -> Optional[dict]:
         weekly_note_html = format_markdown_to_html(content)
         # Add fee section (don't fail preview if fee loading fails)
         try:
-            report_date_val = _get_latest_report_date() or date.today()
+            report_date_val = date(2025, 1, 1) if use_sample else (_get_latest_report_date() or date.today())
             fee_explanation = _load_saved_fee_explanation(report_date_val)
             if fee_explanation is None:
                 try:

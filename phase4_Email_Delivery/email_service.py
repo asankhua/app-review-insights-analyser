@@ -45,7 +45,7 @@ class EmailService:
         self.smtp_port = int(os.getenv("SMTP_PORT") or "587")
         self.sender_email = (os.getenv("EMAIL_SENDER") or self.config.EMAIL_SENDER or "").strip() or None
         self.sender_password = (os.getenv("EMAIL_PASSWORD") or self.config.EMAIL_PASSWORD or "").strip() or None
-        _resend = (os.getenv("RESEND_API_KEY") or self.config.RESEND_API_KEY or "").strip()
+        _resend = (os.getenv("RESEND_API_KEY") or self.config.RESEND_API_KEY or "").strip().replace("\n", "").replace("\r", "")
         # Use Resend when key is set (HTTPS; works when SMTP/DNS is blocked). Else use SMTP.
         self.resend_api_key = _resend or None
         
@@ -153,10 +153,16 @@ class EmailService:
                 'subject': email_message.subject,
             }
         except Exception as e:
-            logger.error(f"Resend send failed: {str(e)}")
+            err_msg = str(e)
+            if "invalid" in err_msg.lower() and "api" in err_msg.lower():
+                err_msg = (
+                    "Resend API key invalid. On Render: add RESEND_API_KEY in Environment. "
+                    "Create a new key at resend.com → API Keys. Remove spaces/newlines when pasting."
+                )
+            logger.error(f"Resend send failed: {err_msg}")
             return {
                 'status': EmailStatus.FAILED,
-                'error_message': str(e),
+                'error_message': err_msg,
                 'message_id': f"failed_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                 'sent_at': None,
                 'processing_time': 0,
