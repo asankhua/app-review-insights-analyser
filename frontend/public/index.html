@@ -356,7 +356,7 @@
           <span class="value" id="lastEmailSent">—</span>
         </div>
         <div class="status-item" id="mcpStatusRow" style="display:none;">
-          <label>Google Doc (MCP)</label>
+          <label>Google Doc</label>
           <span class="value" id="mcpStatusMessage"></span>
         </div>
         <div class="status-item" id="feeStatusRow">
@@ -504,8 +504,7 @@
       var mcpMsg = document.getElementById('mcpStatusMessage');
       if (s.mcp_append_message) {
         mcpRow.style.display = '';
-        var prefix = s.mcp_append_success ? '\u2713 Success: ' : '\u2717 Failed: ';
-        mcpMsg.textContent = prefix + s.mcp_append_message;
+        mcpMsg.textContent = s.mcp_append_message;
         mcpMsg.style.color = s.mcp_append_success ? 'var(--success, #0a0)' : 'var(--error, #c00)';
       } else {
         mcpRow.style.display = 'none';
