@@ -37,6 +37,12 @@ except ImportError:
     # If logging module not available, continue without logging
     log_mcp_start = log_mcp_success = log_mcp_failure = log_mcp_fallback = lambda *args, **kwargs: None
 
+
+def _resolve_mcp_command(command: str, args_list: list) -> tuple[str, list]:
+    """Resolve MCP command if needed (e.g. expand npx/uvx path). Passthrough by default."""
+    return command, args_list
+
+
 def _append_via_simplified_mcp(doc_id: str, text: str, operation: str, log_mcp_start, log_mcp_success, log_mcp_failure) -> tuple[bool, str]:
     """
     Append text to Google Doc using simplified MCP server
