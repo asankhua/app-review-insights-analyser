@@ -167,20 +167,33 @@ def _get_credentials():
 def _append_via_docs_api(doc_id: str, text: str) -> bool:
     """
     Append text to a Google Doc using the Google Docs REST API (fallback when MCP is not used).
+    Updated to use production-ready credentials handling.
     """
-    creds = _get_credentials()
-    if not creds:
+    try:
+        # Import production client
+        from production_google_docs_client import get_google_credentials
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+        
+        # Get credentials using production client
+        credentials_json = get_google_credentials()
+        if not credentials_json:
+            logger.warning("Google credentials not configured; cannot use Docs API fallback.")
+            return False
+        
+        # Create credentials from JSON
+        credentials_info = json.loads(credentials_json)
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_info,
+            scopes=['https://www.googleapis.com/auth/documents']
+        )
+        
+    except Exception as e:
         logger.warning("Google credentials not configured; cannot use Docs API fallback.")
         return False
 
     try:
-        from googleapiclient.discovery import build
-    except ImportError:
-        logger.warning("google-api-python-client not available; cannot use Docs API fallback.")
-        return False
-
-    try:
-        service = build("docs", "v1", credentials=creds)
+        service = build("docs", "v1", credentials=credentials)
         doc = service.documents().get(documentId=doc_id).execute()
         content = doc.get("body", {}).get("content", [])
         end_index = 1
