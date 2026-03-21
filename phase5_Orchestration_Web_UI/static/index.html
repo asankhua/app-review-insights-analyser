@@ -443,6 +443,10 @@
     function hideMessage() {
       actionMessage.style.display = 'none';
     }
+    function escapeHtml(s) {
+      if (s == null || s === '') return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     const IST_OPTS = { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' };
     function formatIST(iso) {
       try {
@@ -528,7 +532,17 @@
       document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
       document.getElementById('appendStatusRow').style.display = 'block';
       var appendStatusEl = document.getElementById('appendStatusMessage');
-      if (appendStatusEl) appendStatusEl.textContent = s.append_status || '—';
+      if (appendStatusEl) {
+        var statusText = s.append_status || '—';
+        var docLink = s.doc_link;
+        if (docLink && statusText !== '—') {
+          appendStatusEl.innerHTML = '<a href="' + docLink + '" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">' + escapeHtml(statusText) + '</a>';
+        } else if (docLink) {
+          appendStatusEl.innerHTML = '<a href="' + docLink + '" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Open Doc</a>';
+        } else {
+          appendStatusEl.textContent = statusText;
+        }
+      }
       
       // Force UI refresh to show latest status
       setTimeout(() => {

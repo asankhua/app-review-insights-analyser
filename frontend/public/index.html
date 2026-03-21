@@ -355,9 +355,9 @@
           <label>Last Email Sent</label>
           <span class="value" id="lastEmailSent">—</span>
         </div>
-        <div class="status-item" id="feeStatusRow">
-          <label>Fee (email/doc)</label>
-          <span class="value" id="feeStatusMessage">—</span>
+        <div class="status-item" id="appendStatusRow">
+          <label><a href="https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0" target="_blank" style="color: inherit; text-decoration: underline;">Appended Doc</a></label>
+          <span class="value" id="appendStatusMessage">—</span>
         </div>
       </div>
     </div>
@@ -443,6 +443,10 @@
     function hideMessage() {
       actionMessage.style.display = 'none';
     }
+    function escapeHtml(s) {
+      if (s == null || s === '') return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     const IST_OPTS = { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' };
     function formatIST(iso) {
       try {
@@ -484,19 +488,6 @@
       if (!b) return s.scheduler_run;
       return a >= b ? s.scheduler_run : s.last_run;
     }
-    function updateStatusPanel(s) {
-      if (!s) return;
-      hideLoadFallback();
-      document.getElementById('reviews').textContent = s.reviews_count ?? '—';
-      document.getElementById('themes').textContent = s.themes_count ?? '—';
-      var lastRunEl = document.getElementById('lastRun');
-      var latestRun = latestRunStamp(s);
-      lastRunEl.textContent = latestRun ? formatIST(latestRun) : 'Never';
-      lastRunEl.title = s.gist_unavailable ? 'Gist configured but unreachable. Check GH_GIST_TOKEN and REPORT_GIST_ID.' : '';
-      document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
-      var feeEl = document.getElementById('feeStatusMessage');
-      if (feeEl) feeEl.textContent = s.fee_url_configured ? 'Configured' : 'Not set';
-    }
     async function fetchStatus() {
       try {
         const r = await fetch(API + '/api/status');
@@ -506,9 +497,11 @@
           if (r.status === 503 && errBody.pipeline_error) {
             document.getElementById('actionMessage').className = 'message info';
             document.getElementById('actionMessage').textContent = errBody.pipeline_error;
-            document.getElementById('actionMessage').style.display = 'block';
+          } else {
+            document.getElementById('actionMessage').className = 'message error';
+            document.getElementById('actionMessage').textContent = (typeof errBody.detail === 'string' ? errBody.detail : null) || 'Status check failed. Try again.';
           }
-          throw new Error(r.status === 503 ? (errBody.pipeline_error || 'Status timed out') : 'Status ' + r.status);
+          return;
         }
         const s = await r.json();
         updateStatusPanel(s);
@@ -522,14 +515,42 @@
         }
         return s;
       } catch (e) {
+        console.error('Status fetch error:', e);
         hideLoadFallback();
-        document.getElementById('reviews').textContent = '?';
-        document.getElementById('themes').textContent = '?';
-        document.getElementById('lastRun').textContent = '—';
-        document.getElementById('lastEmailSent').textContent = '—';
-        document.getElementById('mcpStatusRow').style.display = 'none';
-        return null;
+        document.getElementById('actionMessage').className = 'message error';
+        document.getElementById('actionMessage').textContent = 'Failed to fetch status. Try again.';
       }
+    }
+
+    function updateStatusPanel(s) {
+      document.getElementById('reviews').textContent = s.reviews_count ?? '—';
+      document.getElementById('themes').textContent = s.themes_count ?? '—';
+      var lastRunEl = document.getElementById('lastRun');
+      var latestRun = latestRunStamp(s);
+      lastRunEl.textContent = latestRun ? formatIST(latestRun) : 'Never';
+      lastRunEl.title = s.gist_unavailable ? 'Gist configured but unreachable. Check GH_GIST_TOKEN and REPORT_GIST_ID.' : '';
+      document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
+      document.getElementById('appendStatusRow').style.display = 'block';
+      var appendStatusEl = document.getElementById('appendStatusMessage');
+      if (appendStatusEl) {
+        var statusText = s.append_status || '—';
+        var docLink = s.doc_link;
+        if (docLink && statusText !== '—') {
+          appendStatusEl.innerHTML = '<a href="' + docLink + '" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">' + escapeHtml(statusText) + '</a>';
+        } else if (docLink) {
+          appendStatusEl.innerHTML = '<a href="' + docLink + '" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Open Doc</a>';
+        } else {
+          appendStatusEl.textContent = statusText;
+        }
+      }
+      
+      // Force UI refresh to show latest status
+      setTimeout(() => {
+        if (appendStatusEl) {
+          appendStatusEl.style.display = 'block';
+          appendStatusEl.style.visibility = 'visible';
+        }
+      },100);
     }
 
     async function fetchWithRetry(url, retries) {
@@ -627,9 +648,30 @@
           const forceRes = await fetch(API + '/api/force-combined-report' + sampleParam, { method: 'POST' });
           const forceData = await forceRes.json();
           if (forceData.success) {
+            // Show append status with doc link
+            var statusText = forceData.append_status === 'success' ? 'SUCCESS' : 'FAILED';
+            var statusColor = forceData.append_status === 'success' ? 'success' : 'error';
+            var docLink = forceData.doc_link || '#';
+            
             showMessage(`✅ Combined report appended to Google Doc (${forceData.themes_count || 0} themes, ${forceData.quotes_count || 0} quotes)`, 'success');
+            
+            // Update append status in UI
+            var appendStatusEl = document.getElementById('appendStatusMessage');
+            if (appendStatusEl) {
+              appendStatusEl.innerHTML = `<a href="${docLink}" target="_blank" style="color: inherit; text-decoration: underline;">${statusText}</a>`;
+              // Force refresh of the status display
+              appendStatusEl.style.display = 'block';
+            }
+            
+            // Optional: Show doc link in message
+            showMessage(`📄 <a href="${docLink}" target="_blank" style="color: inherit;">View Combined Report Doc</a>`, 'info');
           } else {
             console.warn('Google Doc append failed:', forceData.message);
+            var appendStatusEl = document.getElementById('appendStatusMessage');
+            if (appendStatusEl) {
+              appendStatusEl.innerHTML = `<a href="${forceData.doc_link || '#'}" target="_blank" style="color: inherit; text-decoration: underline;">FAILED</a>`;
+            }
+            showMessage(`❌ Failed to append: ${forceData.message}`, 'error');
           }
         } catch (appendErr) {
           console.warn('Google Doc append error:', appendErr);

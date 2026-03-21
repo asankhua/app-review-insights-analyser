@@ -180,7 +180,7 @@ Open **http://localhost:8000**
 1. **View Report** — Latest weekly pulse (from Gist or local). Check "Use sample data" for sample.
 2. **Preview Email** — HTML preview (respects sample checkbox).
 3. **Send Email** — Send report via Resend (deployed) or SMTP (local); DOCX attached.
-4. **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Fee (email/doc), Google Doc (MCP).
+4. **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Appended Doc (hyperlink to Google Doc).
 
 ---
 

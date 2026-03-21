@@ -157,7 +157,7 @@ The codebase is organized into separate phases for better maintainability and mo
   2. **Preview Email** — HTML preview (respects "Use sample data" checkbox)
   3. **Send Email** — Send latest report via Resend (deployed) or SMTP (local); DOCX attachment
 - **Checkbox:** "Use sample data" — when checked, View Report and Preview use sample_data; else last synced (Gist/local)
-- **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Fee (email/doc), Google Doc (MCP) status
+- **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Appended Doc (hyperlink to Google Doc)
 - **Report preview** — Rendered markdown in a simple card
 - **No** Run Pipeline (pipeline runs via GitHub Actions scheduler only). **No** analytics, scheduling, or config UI (use CLI / .env)
 

@@ -369,6 +369,7 @@ def _get_status() -> dict:
     }
     try:
         mcp_path = PROJECT_ROOT / "data" / "logs" / "mcp_last.json"
+        doc_link = "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
         if mcp_path.exists():
             try:
                 mcp_data = json.loads(mcp_path.read_text(encoding="utf-8"))
@@ -376,6 +377,16 @@ def _get_status() -> dict:
                 status["mcp_append_message"] = (mcp_data.get("message") or "").strip() or None
             except Exception:
                 pass
+        # Derive append_status for UI; doc_link for Appended Doc tile
+        if status.get("mcp_append_success") is True:
+            status["append_status"] = "Appended"
+            status["doc_link"] = doc_link
+        elif status.get("mcp_append_success") is False and status.get("mcp_append_message"):
+            status["append_status"] = status["mcp_append_message"]
+            status["doc_link"] = doc_link
+        else:
+            status["append_status"] = "—"
+            status["doc_link"] = doc_link
     except Exception:
         pass
     try:

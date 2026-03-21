@@ -80,6 +80,8 @@ _minimal_status = {
     "status_loading": True,
     "mcp_append_success": None,
     "mcp_append_message": None,
+    "append_status": None,
+    "doc_link": None,
 }
 
 # CORS for Vercel frontend (and localhost for dev)
@@ -146,19 +148,30 @@ def _refresh_status_cache_sync() -> None:
         s = get_status()
         status = dict(s)
         status["status_loading"] = False
-        mcp_path = ROOT / "data" / "mcp_append.json"
-        if mcp_path.exists():
-            try:
-                mcp_data = json.loads(mcp_path.read_text(encoding="utf-8"))
-                if mcp_data.get("success") is False or (mcp_data.get("message") and mcp_data.get("message").strip()):
-                    status["mcp_append_success"] = mcp_data.get("success")
-                    status["mcp_append_message"] = (mcp_data.get("message") or "").strip() or None
-            except Exception:
-                pass
+        # get_status already reads data/logs/mcp_last.json and sets mcp_append_*, append_status, doc_link
         _status_cache = status
         _status_cache_ts = time.time()
     except Exception:
         pass
+
+
+def _write_mcp_result_file(success: bool, message: str) -> None:
+    """Write MCP append result so status API / UI reflects latest append after Preview Email."""
+    try:
+        mcp_path = ROOT / "data" / "logs" / "mcp_last.json"
+        mcp_path.parent.mkdir(parents=True, exist_ok=True)
+        mcp_path.write_text(
+            json.dumps({"success": success, "message": (message or "").strip()}, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as e:
+        logger.debug("Could not write MCP result: %s", e)
+
+
+def _invalidate_status_cache() -> None:
+    """Invalidate status cache so next /api/status returns fresh data."""
+    global _status_cache_ts
+    _status_cache_ts = 0
 
 
 async def _refresh_status_background() -> None:
@@ -342,6 +355,10 @@ async def api_send_email(req: SendEmailRequest, background_tasks: BackgroundTask
     )
 
 
+_DEFAULT_DOC_ID = "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0"
+_DEFAULT_DOC_LINK = f"https://docs.google.com/document/d/{_DEFAULT_DOC_ID}/edit?tab=t.0"
+
+
 @app.post("/api/force-combined-report")
 async def api_force_combined_report(sample: bool = False):
     """Append combined report with timestamp to Google Doc. Called when Preview Email is clicked."""
@@ -353,12 +370,15 @@ async def api_force_combined_report(sample: bool = False):
         themes_count = len(payload.weekly_pulse.themes) if payload else 0
         quotes_count = len(payload.weekly_pulse.quotes) if payload else 0
         
-        # Get append status and doc link
-        append_status = "success" if success else "failed"
-        doc_link = "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
+        # Stamp MCP log so status UI reflects latest append; invalidate cache for fresh fetch
+        _write_mcp_result_file(success, message)
+        _invalidate_status_cache()
         
-        # Log the operation result for debugging
-        logger.info(f"API force-combined-report result: success={success}, message={message}")
+        append_status = "success" if success else "failed"
+        doc_id = (os.environ.get("GOOGLE_DOC_ID") or _DEFAULT_DOC_ID).strip()
+        doc_link = doc_id if doc_id.startswith("http") else f"https://docs.google.com/document/d/{doc_id}/edit?tab=t.0"
+        
+        logger.info("API force-combined-report result: success=%s, message=%s", success, message)
         
         return JSONResponse(content={
             "success": success,
@@ -369,19 +389,23 @@ async def api_force_combined_report(sample: bool = False):
             "doc_link": doc_link,
         })
     except asyncio.TimeoutError:
+        _write_mcp_result_file(False, "Append timed out")
+        _invalidate_status_cache()
         return JSONResponse(content={
-            "success": False, 
+            "success": False,
             "message": "Append timed out",
             "append_status": "failed",
-            "doc_link": "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
+            "doc_link": _DEFAULT_DOC_LINK,
         })
     except Exception as e:
-        logger.error(f"Force combined report failed: {e}")
+        logger.error("Force combined report failed: %s", e)
+        _write_mcp_result_file(False, str(e))
+        _invalidate_status_cache()
         return JSONResponse(content={
-            "success": False, 
+            "success": False,
             "message": str(e),
             "append_status": "failed",
-            "doc_link": "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
+            "doc_link": _DEFAULT_DOC_LINK,
         })
 
 
