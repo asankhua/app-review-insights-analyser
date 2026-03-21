@@ -4,40 +4,144 @@ Phase 8: Append combined report to a Google Doc.
 - Fallback: Google Docs REST API with service account credentials.
 """
 import asyncio
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-IST = ZoneInfo("Asia/Kolkata")
 import json
 import logging
 import os
 import re
 import shlex
+import subprocess
 import sys
-from typing import Optional
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from typing import Optional, Tuple
 
-from .models.combined_report import CombinedReportPayload
+IST = ZoneInfo("Asia/Kolkata")
 
 logger = logging.getLogger(__name__)
 
-
-def _resolve_mcp_command(command: str, args_list: list) -> tuple[str, list]:
-    """Use installed google-docs-mcp-server when uvx is not found."""
-    if command != "uvx":
-        return command, args_list
+# Import CombinedReportPayload
+try:
+    from .models.combined_report import CombinedReportPayload
+except ImportError:
+    # Fallback for direct execution
     try:
-        import shutil
+        from phase8_Combined_JSON_Google_Doc_MCP.models.combined_report import CombinedReportPayload
+    except ImportError:
+        # If still not found, define a placeholder
+        CombinedReportPayload = None
 
-        if shutil.which("uvx"):
-            return "uvx", args_list if args_list else ["google-docs-mcp-server"]
-    except Exception:
-        pass
-    # Fallback: use google-docs-mcp-server from same env as current Python (pip install google-docs-mcp-server)
-    bin_dir = os.path.dirname(os.path.abspath(sys.executable))
-    gdocs_bin = os.path.join(bin_dir, "google-docs-mcp-server")
-    if os.path.isfile(gdocs_bin) and os.access(gdocs_bin, os.X_OK):
-        return gdocs_bin, []
-    return sys.executable, ["-m", "google_docs_mcp_server"]
+# Import logging functions
+try:
+    from data.mcp_status.mcp_logger import log_mcp_start, log_mcp_success, log_mcp_failure, log_mcp_fallback
+except ImportError:
+    # If logging module not available, continue without logging
+    log_mcp_start = log_mcp_success = log_mcp_failure = log_mcp_fallback = lambda *args, **kwargs: None
+
+def _append_via_simplified_mcp(doc_id: str, text: str, operation: str, log_mcp_start, log_mcp_success, log_mcp_failure) -> tuple[bool, str]:
+    """
+    Append text to Google Doc using simplified MCP server
+    """
+    try:
+        command = os.environ.get("MCP_GOOGLE_DOCS_MCP_COMMAND", "").strip()
+        args_str = os.environ.get("MCP_GOOGLE_DOCS_MCP_ARGS", "").strip()
+        
+        if not command:
+            error = "MCP_GOOGLE_DOCS_MCP_COMMAND not set"
+            log_mcp_failure(operation, doc_id, error, {"reason": "missing_command"})
+            return False, error
+        
+        # Parse arguments
+        args_list = []
+        if args_str:
+            try:
+                args_list = json.loads(args_str) if args_str.startswith("[") else args_str.split()
+            except (json.JSONDecodeError, ValueError):
+                args_list = [a.strip() for a in args_str.split() if a.strip()]
+        
+        # Prepare environment
+        service_account_path = os.environ.get("MCP_GOOGLE_DOCS_SERVICE_ACCOUNT_PATH") or os.environ.get("GOOGLE_DRIVE_CREDENTIALS_PATH")
+        subject_email = os.environ.get("MCP_GOOGLE_DOCS_SUBJECT_EMAIL", "").strip()
+        
+        env = {**os.environ}
+        if service_account_path:
+            import os.path as path_module
+            resolved = path_module.expanduser(service_account_path)
+            if not path_module.isabs(resolved):
+                resolved = path_module.abspath(resolved)
+            env["SERVICE_ACCOUNT_PATH"] = resolved
+        if subject_email:
+            env["SUBJECT_EMAIL"] = subject_email
+        
+        # Create MCP protocol message for append_text
+        mcp_message = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "append_text",
+                "arguments": {
+                    "document_id": doc_id,
+                    "text": text
+                }
+            }
+        }
+        
+        # Log MCP server start
+        log_mcp_start("mcp_server", doc_id, {"command": command, "args": args_list})
+        
+        # Run the simplified MCP server
+        process = subprocess.run(
+            [command] + args_list,
+            input=json.dumps(mcp_message) + "\n",
+            text=True,
+            capture_output=True,
+            env=env,
+            timeout=30
+        )
+        
+        if process.returncode == 0:
+            try:
+                response = json.loads(process.stdout.strip())
+                result = response.get("result", {})
+                content = result.get("content", [])
+                if content and not result.get("isError", False):
+                    message = "mcp success"
+                    log_mcp_success(operation, doc_id, message, {
+                        "mcp_response": result,
+                        "process_returncode": process.returncode,
+                        "status": "mcp_success"
+                    })
+                    return True, message
+                else:
+                    error_msg = content[0].get("text", "Unknown error") if content else "Unknown error"
+                    log_mcp_failure(operation, doc_id, error_msg, {
+                        "mcp_response": result,
+                        "process_returncode": process.returncode
+                    })
+                    return False, error_msg
+            except json.JSONDecodeError:
+                error_msg = "Failed to parse MCP response"
+                log_mcp_failure(operation, doc_id, error_msg, {
+                    "stdout": process.stdout[:200],
+                    "process_returncode": process.returncode
+                })
+                return False, error_msg
+        else:
+            error_msg = process.stderr.strip() or "MCP server failed"
+            log_mcp_failure(operation, doc_id, error_msg, {
+                "stderr": process.stderr[:200],
+                "process_returncode": process.returncode
+            })
+            return False, error_msg
+            
+    except subprocess.TimeoutExpired:
+        error_msg = "MCP server timeout"
+        log_mcp_failure(operation, doc_id, error_msg, {"timeout": True})
+        return False, error_msg
+    except Exception as e:
+        error_msg = f"Simplified MCP append failed: {e}"
+        log_mcp_failure(operation, doc_id, error_msg, {"exception": str(e)})
+        return False, error_msg
 
 
 def _extract_doc_id(doc_id_or_url: str) -> str:
@@ -67,11 +171,26 @@ def _append_via_mcp(doc_id: str, text: str) -> tuple[bool, str]:
     Server env: SERVICE_ACCOUNT_PATH, SUBJECT_EMAIL (or GOOGLE_DRIVE_CREDENTIALS_PATH, MCP_GOOGLE_DOCS_SUBJECT_EMAIL).
     Returns (True, "") on success, (False, error_message) otherwise.
     """
+    # Import logging functions
+    try:
+        from mcp_status.mcp_logger import log_mcp_start, log_mcp_success, log_mcp_failure, log_mcp_fallback
+    except ImportError:
+        # If logging module not available, continue without logging
+        log_mcp_start = log_mcp_success = log_mcp_failure = log_mcp_fallback = lambda *args, **kwargs: None
+    
+    operation = "append_text"
+    
+    # Log operation start
+    log_mcp_start(operation, doc_id, {"text_length": len(text)})
+    
     try:
         from mcp import ClientSession, StdioServerParameters, stdio_client
     except ImportError as e:
-        logger.debug("MCP SDK not available; cannot use MCP path: %s", e)
-        return False, str(e)
+        error_msg = f"MCP SDK not available; cannot use MCP path: {e}"
+        log_mcp_fallback(operation, doc_id, error_msg, {"reason": "mcp_sdk_missing"})
+        logger.debug(error_msg)
+        # Try to use simplified MCP server instead
+        return _append_via_simplified_mcp(doc_id, text, operation, log_mcp_start, log_mcp_success, log_mcp_failure)
 
     command = os.environ.get("MCP_GOOGLE_DOCS_MCP_COMMAND", "").strip()
     args_str = os.environ.get("MCP_GOOGLE_DOCS_MCP_ARGS", "").strip()
@@ -125,15 +244,19 @@ def _append_via_mcp(doc_id: str, text: str) -> tuple[bool, str]:
                         if parts:
                             err_msg = " ".join(str(p) for p in parts)
                     logger.warning("MCP append_text returned error or empty: %s", result)
+                    log_mcp_failure(operation, doc_id, err_msg, {"mcp_result": str(result)})
                     return False, err_msg
                 logger.info("Appended combined report to Google Doc via MCP: %s", doc_id)
+                log_mcp_success(operation, doc_id, "Appended via MCP", {"mcp_result": str(result)})
                 return True, ""
 
     try:
         return asyncio.run(_run_mcp_append())
     except Exception as e:
-        logger.warning("MCP append to Google Doc failed: %s", e)
-        return False, str(e)
+        error_msg = f"MCP append to Google Doc failed: {e}"
+        logger.warning(error_msg)
+        log_mcp_failure(operation, doc_id, error_msg, {"exception": str(e)})
+        return False, error_msg
 
 
 def _get_credentials():
@@ -249,11 +372,36 @@ def append_to_google_doc(
     if _is_mcp_configured():
         mcp_ok, mcp_err = _append_via_mcp(doc_id, text)
         if mcp_ok:
+            # Log MCP success with specific status
+            try:
+                from data.mcp_status.mcp_logger import log_mcp_success
+                log_mcp_success("append_text", doc_id, "mcp success", {"status": "mcp_success"})
+            except ImportError:
+                pass
             return True, "Google Doc: appended successfully via MCP."
         try:
             if _append_via_docs_api(doc_id, text):
+                # Log MCP fail with fallback success
+                try:
+                    from data.mcp_status.mcp_logger import log_mcp_fallback
+                    log_mcp_fallback("append_text", doc_id, "mcp fail, fallback success", {
+                        "status": "mcp_fail_fallback_success",
+                        "mcp_error": mcp_err,
+                        "fallback_method": "docs_api"
+                    })
+                except ImportError:
+                    pass
                 return True, "Google Doc: appended via Docs API (MCP failed)."
         except Exception as e2:
+            try:
+                from data.mcp_status.mcp_logger import log_mcp_failure
+                log_mcp_failure("append_text", doc_id, "mcp fail, fallback fail", {
+                    "status": "mcp_fail_fallback_fail",
+                    "mcp_error": mcp_err,
+                    "fallback_error": str(e2)
+                })
+            except ImportError:
+                pass
             return False, f"MCP failed ({mcp_err}); Docs API fallback failed: {e2}"
         return False, f"MCP append failed: {mcp_err}; Docs API fallback also failed."
 

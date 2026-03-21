@@ -1,0 +1,18 @@
+2026-03-21 09:25:10 - mcp_operations - INFO - MCP START: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:25:10 - mcp_operations - INFO - MCP SUCCESS: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - Test success message
+2026-03-21 09:25:10 - mcp_operations - INFO - MCP START: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:25:10 - mcp_operations - ERROR - MCP FAILURE: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - Test failure message
+2026-03-21 09:25:10 - mcp_operations - INFO - MCP START: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:25:10 - mcp_operations - WARNING - MCP FALLBACK: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - Test fallback reason
+2026-03-21 09:26:58 - mcp_operations - INFO - MCP START: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:26:58 - mcp_operations - WARNING - MCP FALLBACK: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - MCP SDK not available; cannot use MCP path: cannot import name 'ClientSession' from 'mcp' (unknown location)
+2026-03-21 09:28:53 - mcp_operations - INFO - MCP START: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:28:53 - mcp_operations - WARNING - MCP FALLBACK: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - MCP SDK not available; cannot use MCP path: cannot import name 'ClientSession' from 'mcp' (unknown location)
+2026-03-21 09:28:53 - mcp_operations - ERROR - MCP FAILURE: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - MCP_GOOGLE_DOCS_MCP_COMMAND not set
+2026-03-21 09:29:33 - mcp_operations - INFO - MCP START: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:29:33 - mcp_operations - WARNING - MCP FALLBACK: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - MCP SDK not available; cannot use MCP path: cannot import name 'ClientSession' from 'mcp' (unknown location)
+2026-03-21 09:29:33 - mcp_operations - INFO - MCP START: mcp_server for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0
+2026-03-21 09:29:36 - mcp_operations - INFO - MCP SUCCESS: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - Google Doc: appended successfully.
+2026-03-21 09:44:21 - mcp_operations - INFO - MCP SUCCESS: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - mcp success
+2026-03-21 09:44:21 - mcp_operations - WARNING - MCP FALLBACK: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - mcp fail, fallback success
+2026-03-21 09:44:27 - mcp_operations - INFO - MCP SUCCESS: append_text for doc 18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0 - mcp success

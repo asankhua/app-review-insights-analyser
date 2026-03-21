@@ -1,0 +1,123 @@
+[
+  {
+    "timestamp": "2026-03-21T09:25:10.730755",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "success",
+    "message": "Test success message",
+    "details": {
+      "test": "success_case"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:25:10.836775",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "failure",
+    "error": "Test failure message",
+    "details": {
+      "test": "failure_case"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:25:10.942845",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "fallback",
+    "fallback_reason": "Test fallback reason",
+    "details": {
+      "test": "fallback_case"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:26:58.929459",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "fallback",
+    "fallback_reason": "MCP SDK not available; cannot use MCP path: cannot import name 'ClientSession' from 'mcp' (unknown location)",
+    "details": {
+      "reason": "mcp_sdk_missing"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:28:53.376120",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "fallback",
+    "fallback_reason": "MCP SDK not available; cannot use MCP path: cannot import name 'ClientSession' from 'mcp' (unknown location)",
+    "details": {
+      "reason": "mcp_sdk_missing"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:28:53.376440",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "failure",
+    "error": "MCP_GOOGLE_DOCS_MCP_COMMAND not set",
+    "details": {
+      "reason": "missing_command"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:29:33.762430",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "fallback",
+    "fallback_reason": "MCP SDK not available; cannot use MCP path: cannot import name 'ClientSession' from 'mcp' (unknown location)",
+    "details": {
+      "reason": "mcp_sdk_missing"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:29:36.636202",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "success",
+    "message": "Google Doc: appended successfully.",
+    "details": {
+      "mcp_response": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Google Doc: appended successfully."
+          }
+        ],
+        "isError": false
+      },
+      "process_returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:44:21.077884",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "success",
+    "message": "mcp success",
+    "details": {
+      "status": "mcp_success"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:44:21.078391",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "fallback",
+    "fallback_reason": "mcp fail, fallback success",
+    "details": {
+      "status": "mcp_fail_fallback_success",
+      "mcp_error": "Test error",
+      "fallback_method": "docs_api"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T09:44:27.694257",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "success",
+    "message": "mcp success",
+    "details": {
+      "status": "mcp_success"
+    }
+  }
+]
