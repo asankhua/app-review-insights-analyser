@@ -355,10 +355,6 @@
           <label>Last Email Sent</label>
           <span class="value" id="lastEmailSent">—</span>
         </div>
-        <div class="status-item" id="mcpStatusRow" style="display:none;">
-          <label>Google Doc</label>
-          <span class="value" id="mcpStatusMessage"></span>
-        </div>
         <div class="status-item" id="feeStatusRow">
           <label>Fee (email/doc)</label>
           <span class="value" id="feeStatusMessage">—</span>
@@ -501,17 +497,6 @@
       document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
       var feeEl = document.getElementById('feeStatusMessage');
       if (feeEl) feeEl.textContent = s.fee_url_configured ? 'Configured' : 'Not set';
-      var mcpRow = document.getElementById('mcpStatusRow');
-      var mcpMsg = document.getElementById('mcpStatusMessage');
-      // Explicitly check for null, undefined, empty string, or whitespace
-      if (s.mcp_append_message && s.mcp_append_message.trim() !== '') {
-        mcpRow.style.display = '';
-        mcpMsg.textContent = s.mcp_append_message;
-        mcpMsg.style.color = s.mcp_append_success ? 'var(--success, #0a0)' : 'var(--error, #c00)';
-      } else {
-        mcpRow.style.display = 'none';
-        mcpMsg.textContent = '';
-      }
     }
     async function fetchStatus() {
       try {
