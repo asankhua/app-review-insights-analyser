@@ -136,11 +136,19 @@ def _refresh_status_cache_sync() -> None:
     try:
         from phase5_Orchestration_Web_UI.pipeline import get_status
         s = get_status()
-        if isinstance(s, dict):
-            s = dict(s)
-            s["status_loading"] = False
-            _status_cache = s
-            _status_cache_ts = time.time()
+        status = dict(s)
+        status["status_loading"] = False
+        mcp_path = ROOT / "data" / "mcp_append.json"
+        if mcp_path.exists():
+            try:
+                mcp_data = json.loads(mcp_path.read_text(encoding="utf-8"))
+                if mcp_data.get("success") is False or (mcp_data.get("message") and mcp_data.get("message").strip()):
+                    status["mcp_append_success"] = mcp_data.get("success")
+                    status["mcp_append_message"] = (mcp_data.get("message") or "").strip() or None
+            except Exception:
+                pass
+        _status_cache = status
+        _status_cache_ts = time.time()
     except Exception:
         pass
 
