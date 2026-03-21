@@ -18,29 +18,50 @@ def _extract_themes_quotes_actions_from_report(report: Dict[str, Any]) -> Weekly
     themes: List[str] = []
     quotes: List[str] = []
     action_ideas: List[str] = []
-
-    for t in report.get("themes") or []:
-        if isinstance(t, dict):
-            themes.append(
-                t.get("name") or t.get("description") or t.get("label") or str(t)
-            )
-        else:
-            themes.append(str(t))
-
-    for q in report.get("quotes") or []:
+    
+    # Extract themes
+    themes_data = report.get("themes", [])
+    if isinstance(themes_data, list):
+        for t in themes_data:
+            if isinstance(t, dict):
+                themes.append(t.get("name") or t.get("description") or t.get("label") or str(t))
+            else:
+                themes.append(str(t))
+    
+    # Extract quotes (remove duplicates and empty quotes)
+    quotes_data = report.get("quotes", [])
+    seen_quotes = set()
+    for q in quotes_data:
         if isinstance(q, dict):
-            quotes.append(q.get("text") or q.get("quote") or str(q))
+            quote_text = q.get("text") or q.get("quote") or str(q)
+            # Skip empty quotes and duplicates
+            if quote_text and quote_text.strip() and quote_text not in seen_quotes:
+                quotes.append(quote_text)
+                seen_quotes.add(quote_text)
         else:
-            quotes.append(str(q))
-
-    for a in report.get("actions") or []:
+            quote_text = str(q)
+            # Skip empty quotes and duplicates
+            if quote_text and quote_text.strip() and quote_text not in seen_quotes:
+                quotes.append(quote_text)
+                seen_quotes.add(quote_text)
+    
+    # Extract action ideas (remove duplicates and empty actions)
+    actions_data = report.get("actions", [])
+    seen_actions = set()
+    for a in actions_data:
         if isinstance(a, dict):
-            action_ideas.append(
-                a.get("description") or a.get("action") or str(a)
-            )
+            action_text = a.get("description") or a.get("action") or str(a)
+            # Skip empty actions and duplicates
+            if action_text and action_text.strip() and action_text not in seen_actions:
+                action_ideas.append(action_text)
+                seen_actions.add(action_text)
         else:
-            action_ideas.append(str(a))
-
+            action_text = str(a)
+            # Skip empty actions and duplicates
+            if action_text and action_text.strip() and action_text not in seen_actions:
+                action_ideas.append(action_text)
+                seen_actions.add(action_text)
+    
     return WeeklyPulseSection(
         themes=themes,
         quotes=quotes,
