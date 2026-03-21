@@ -357,6 +357,9 @@ async def api_force_combined_report(sample: bool = False):
         append_status = "success" if success else "failed"
         doc_link = "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
         
+        # Log the operation result for debugging
+        logger.info(f"API force-combined-report result: success={success}, message={message}")
+        
         return JSONResponse(content={
             "success": success,
             "message": message,
