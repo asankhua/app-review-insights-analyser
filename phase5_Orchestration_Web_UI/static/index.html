@@ -502,12 +502,14 @@
       if (feeEl) feeEl.textContent = s.fee_url_configured ? 'Configured' : 'Not set';
       var mcpRow = document.getElementById('mcpStatusRow');
       var mcpMsg = document.getElementById('mcpStatusMessage');
-      if (s.mcp_append_message) {
+      // Explicitly check for null, undefined, empty string, or whitespace
+      if (s.mcp_append_message && s.mcp_append_message.trim() !== '') {
         mcpRow.style.display = '';
         mcpMsg.textContent = s.mcp_append_message;
         mcpMsg.style.color = s.mcp_append_success ? 'var(--success, #0a0)' : 'var(--error, #c00)';
       } else {
         mcpRow.style.display = 'none';
+        mcpMsg.textContent = '';
       }
     }
     async function fetchStatus() {
