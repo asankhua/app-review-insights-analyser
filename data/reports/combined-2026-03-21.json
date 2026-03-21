@@ -1,0 +1,28 @@
+{
+  "date": "2026-03-21",
+  "weekly_pulse": {
+    "themes": [
+      "Users asking for average NAV, trailing stoploss, order modification",
+      "Issues with order execution, fund tracking, fractional shares limit orders",
+      "Navigation difficulties, chart usability, interface problems"
+    ],
+    "quotes": [
+      "User feedback shows areas for improvement",
+      "User feedback shows areas for improvement",
+      "User feedback shows areas for improvement"
+    ],
+    "action_ideas": [
+      "Continue improving user experience based on feedback",
+      "Continue improving user experience based on feedback",
+      "Continue improving user experience based on feedback"
+    ]
+  },
+  "fee_scenario": "Refer to fund page (fetch failed)",
+  "explanation_bullets": [
+    "For exit load, expense ratio and other charges, see the fund page link below."
+  ],
+  "source_links": [
+    "https://www.indmoney.com/mutual-funds/hdfc-mid-cap-fund-direct-plan-growth-option-3097"
+  ],
+  "last_checked": ""
+}
