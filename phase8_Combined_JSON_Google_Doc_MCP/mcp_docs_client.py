@@ -4,6 +4,10 @@ Phase 8: Append combined report to a Google Doc.
 - Fallback: Google Docs REST API with service account credentials.
 """
 import asyncio
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
 import json
 import logging
 import os
@@ -221,11 +225,13 @@ def _append_via_docs_api(doc_id: str, text: str) -> bool:
 def append_to_google_doc(
     payload: CombinedReportPayload,
     doc_id: Optional[str] = None,
+    include_timestamp: bool = False,
 ) -> tuple[bool, str]:
     """
     Append the combined report (human-readable text) to the given Google Doc.
     - If MCP is configured (MCP_GOOGLE_DOCS_USE_MCP=1 and MCP_GOOGLE_DOCS_MCP_COMMAND set), tries MCP first.
     - Fallback: Google Docs API with GOOGLE_DRIVE_CREDENTIALS_* and GOOGLE_DOC_ID.
+    - include_timestamp: when True, prepends "--- Appended at YYYY-MM-DD HH:MM:SS IST ---" to the text.
     Returns (success, message) for UI. success True if append succeeded; message is user-facing (e.g. "Appended to Google Doc" or error reason).
     """
     doc_id = _extract_doc_id(doc_id or os.environ.get("GOOGLE_DOC_ID", ""))
@@ -234,6 +240,9 @@ def append_to_google_doc(
         return False, ""
 
     text = payload.to_human_readable()
+    if include_timestamp:
+        ts = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+        text = f"--- Appended at {ts} IST ---\n\n{text}"
     if not text:
         return True, ""
 

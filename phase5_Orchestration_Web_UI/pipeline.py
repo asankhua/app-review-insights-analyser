@@ -618,6 +618,67 @@ def _get_latest_report_path() -> Optional[str]:
     return None
 
 
+# Default Google Doc for append-on-preview (user-specified)
+_DEFAULT_GOOGLE_DOC_ID = "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0"
+
+
+def append_combined_report_on_preview(
+    use_sample: bool = False,
+    doc_id: Optional[str] = None,
+) -> tuple[bool, str, Optional[Any]]:
+    """
+    Build combined report and append to Google Doc with timestamp.
+    Called when Preview Email is clicked. Uses same report/fee as the preview.
+    Returns (success, message, payload). payload is the CombinedReportPayload when success (for themes/quotes counts).
+    """
+    report_date_val = date(2025, 1, 1) if use_sample else (_get_latest_report_date() or date.today())
+    doc_id = doc_id or os.environ.get("GOOGLE_DOC_ID", "").strip() or _DEFAULT_GOOGLE_DOC_ID
+    try:
+        from phase8_Combined_JSON_Google_Doc_MCP.mcp_docs_client import append_to_google_doc
+        from phase8_Combined_JSON_Google_Doc_MCP.combined_builder import build_combined_payload, load_weekly_pulse_for_date
+
+        fee_explanation = _load_saved_fee_explanation(report_date_val)
+        if fee_explanation is None:
+            fee_url = (os.environ.get("FEE_EXPLANATION_URL") or "").strip().strip('"').strip("'")
+            if fee_url:
+                try:
+                    from phase7_Fee_Explanation import get_fee_explanation
+                    fee_explanation = get_fee_explanation(report_date=report_date_val, fee_url=fee_url, save_to_reports=False)
+                except Exception:
+                    pass
+
+        fee_scenario = ""
+        explanation_bullets = []
+        source_links = []
+        last_checked = ""
+        if fee_explanation is not None and hasattr(fee_explanation, "fee_scenario"):
+            fee_scenario = getattr(fee_explanation, "fee_scenario", "") or ""
+            explanation_bullets = list(getattr(fee_explanation, "explanation_bullets", []) or [])
+            source_links = list(getattr(fee_explanation, "source_links", []) or [])
+            last_checked = getattr(fee_explanation, "last_checked", "") or ""
+        else:
+            fee_url = os.environ.get("FEE_EXPLANATION_URL", "").strip()
+            if fee_url:
+                fee_scenario = "Refer to fund page (fetch failed)"
+                explanation_bullets = ["For exit load, expense ratio and other charges, see the fund page link below."]
+                source_links = [fee_url]
+
+        payload = build_combined_payload(
+            report_date=report_date_val,
+            weekly_pulse=load_weekly_pulse_for_date(report_date_val),
+            fee_scenario=fee_scenario or None,
+            explanation_bullets=explanation_bullets or None,
+            source_links=source_links or None,
+            last_checked=last_checked or None,
+        )
+        appended, mcp_msg = append_to_google_doc(payload, doc_id=doc_id, include_timestamp=True)
+        msg = mcp_msg or ("Appended to Google Doc" if appended else "Append failed")
+        return appended, msg, payload if appended else None
+    except Exception as e:
+        logger.warning("Append on preview failed: %s", e)
+        return False, str(e), None
+
+
 def send_email(recipient: Optional[str] = None) -> dict:
     """
     Send latest weekly report via email.

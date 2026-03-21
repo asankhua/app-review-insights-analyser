@@ -343,69 +343,32 @@ async def api_send_email(req: SendEmailRequest, background_tasks: BackgroundTask
 
 
 @app.post("/api/force-combined-report")
-async def api_force_combined_report():
-    """Force append combined report to Google Doc - direct fix for production issues."""
+async def api_force_combined_report(sample: bool = False):
+    """Append combined report with timestamp to Google Doc. Called when Preview Email is clicked."""
+    def _do_append():
+        from phase5_Orchestration_Web_UI.pipeline import append_combined_report_on_preview
+        return append_combined_report_on_preview(use_sample=sample)
     try:
-        from datetime import date, datetime
-        from phase8_Combined_JSON_Google_Doc_MCP import run_phase8
-        from production_google_docs_client import append_to_google_doc_production
-        
-        # Get parameters
-        doc_id = os.environ.get("GOOGLE_DOC_ID", "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0")
-        report_date = date.today()
-        
-        logger.info(f"Force appending combined report for {report_date} to {doc_id}")
-        
-        # Generate combined report
-        success, payload, mcp_message = run_phase8(
-            report_date=report_date,
-            fee_explanation=None,
-            save_to_reports=True,
-            doc_id=doc_id
-        )
-        
-        if success and payload:
-            # Generate human-readable report
-            report_text = payload.to_human_readable()
-            
-            # Add timestamp
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            report_text = f"\n--- FORCE APPEND - {timestamp} ---\n{report_text}"
-            
-            # Append to Google Doc
-            append_success, append_message = append_to_google_doc_production(doc_id, report_text)
-            
-            return JSONResponse(content={
-                "success": True,
-                "message": "Combined report force-appended successfully",
-                "report_date": report_date.strftime("%Y-%m-%d"),
-                "doc_id": doc_id,
-                "themes_count": len(payload.weekly_pulse.themes),
-                "quotes_count": len(payload.weekly_pulse.quotes),
-                "append_success": append_success,
-                "append_message": append_message,
-                "google_doc_url": f"https://docs.google.com/document/d/{doc_id}"
-            })
-        else:
-            return JSONResponse(content={
-                "success": False,
-                "message": "Failed to generate combined report",
-                "error": mcp_message or "Unknown error"
-            })
-            
+        success, message, payload = await asyncio.wait_for(asyncio.to_thread(_do_append), timeout=25.0)
+        themes_count = len(payload.weekly_pulse.themes) if payload else 0
+        quotes_count = len(payload.weekly_pulse.quotes) if payload else 0
+        return JSONResponse(content={
+            "success": success,
+            "message": message,
+            "themes_count": themes_count,
+            "quotes_count": quotes_count,
+        })
+    except asyncio.TimeoutError:
+        return JSONResponse(content={"success": False, "message": "Append timed out"})
     except Exception as e:
         logger.error(f"Force combined report failed: {e}")
-        return JSONResponse(content={
-            "success": False,
-            "message": "Force append failed",
-            "error": str(e)
-        })
+        return JSONResponse(content={"success": False, "message": str(e)})
 
 
 @app.get("/api/force-combined-report")
-async def api_force_combined_report_get():
+async def api_force_combined_report_get(sample: bool = False):
     """GET endpoint for easy testing."""
-    return await api_force_combined_report()
+    return await api_force_combined_report(sample=sample)
 
 
 if __name__ == "__main__":
