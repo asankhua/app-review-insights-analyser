@@ -119,5 +119,25 @@
     "details": {
       "status": "mcp_success"
     }
+  },
+  {
+    "timestamp": "2026-03-21T10:41:58.869849",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "success",
+    "message": "mcp success",
+    "details": {
+      "status": "mcp_success"
+    }
+  },
+  {
+    "timestamp": "2026-03-21T10:46:05.415714",
+    "operation": "append_text",
+    "doc_id": "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0",
+    "status": "success",
+    "message": "mcp success",
+    "details": {
+      "status": "mcp_success"
+    }
   }
 ]

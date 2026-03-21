@@ -352,17 +352,34 @@ async def api_force_combined_report(sample: bool = False):
         success, message, payload = await asyncio.wait_for(asyncio.to_thread(_do_append), timeout=25.0)
         themes_count = len(payload.weekly_pulse.themes) if payload else 0
         quotes_count = len(payload.weekly_pulse.quotes) if payload else 0
+        
+        # Get append status and doc link
+        append_status = "success" if success else "failed"
+        doc_link = "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
+        
         return JSONResponse(content={
             "success": success,
             "message": message,
             "themes_count": themes_count,
             "quotes_count": quotes_count,
+            "append_status": append_status,
+            "doc_link": doc_link,
         })
     except asyncio.TimeoutError:
-        return JSONResponse(content={"success": False, "message": "Append timed out"})
+        return JSONResponse(content={
+            "success": False, 
+            "message": "Append timed out",
+            "append_status": "failed",
+            "doc_link": "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
+        })
     except Exception as e:
         logger.error(f"Force combined report failed: {e}")
-        return JSONResponse(content={"success": False, "message": str(e)})
+        return JSONResponse(content={
+            "success": False, 
+            "message": str(e),
+            "append_status": "failed",
+            "doc_link": "https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0"
+        })
 
 
 @app.get("/api/force-combined-report")

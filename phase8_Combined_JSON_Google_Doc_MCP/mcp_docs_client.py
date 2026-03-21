@@ -366,10 +366,20 @@ def append_to_google_doc(
     if include_timestamp:
         ts = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
         text = f"--- Appended at {ts} IST ---\n\n{text}"
+    
     if not text:
         return True, ""
 
     if _is_mcp_configured():
+        # Prepare status text first
+        mcp_status_text = "\n\n📊 **Append Method**: MCP (Model Context Protocol)\n✅ **Status**: MCP SUCCESS - Report appended via Model Context Protocol"
+        fallback_status_text = "\n\n📊 **Append Method**: Google Docs API (Fallback)\n🔄 **Status**: MCP FAILED, FALLBACK SUCCESS - Report appended via Google Docs API"
+        fallback_fail_text = "\n\n📊 **Append Method**: Google Docs API (Fallback)\n❌ **Status**: MCP FAILED, FALLBACK FAILED - Both MCP and Google Docs API failed"
+        
+        # Add status text to the content BEFORE calling MCP
+        text += mcp_status_text
+        
+        # Now call MCP with the complete content (including status text)
         mcp_ok, mcp_err = _append_via_mcp(doc_id, text)
         if mcp_ok:
             # Log MCP success with specific status
@@ -393,6 +403,7 @@ def append_to_google_doc(
                     pass
                 return True, "Google Doc: appended via Docs API (MCP failed)."
         except Exception as e2:
+            # Log fallback failure
             try:
                 from data.mcp_status.mcp_logger import log_mcp_failure
                 log_mcp_failure("append_text", doc_id, "mcp fail, fallback fail", {
@@ -405,7 +416,15 @@ def append_to_google_doc(
             return False, f"MCP failed ({mcp_err}); Docs API fallback failed: {e2}"
         return False, f"MCP append failed: {mcp_err}; Docs API fallback also failed."
 
+    # When not using MCP, append directly with API
     try:
+        # Prepare status text for direct API
+        api_status_text = "\n\n📊 **Append Method**: Google Docs API (Direct)\n✅ **Status**: SUCCESS - Report appended via Google Docs API"
+        api_fail_text = "\n\n📊 **Append Method**: Google Docs API (Direct)\n❌ **Status**: FAILED - Could not append via Google Docs API"
+        
+        # Add status text to the content BEFORE calling API
+        text += api_status_text
+        
         ok = _append_via_docs_api(doc_id, text)
         return ok, "Google Doc: appended successfully." if ok else "Google Doc: append failed."
     except Exception as e:
