@@ -592,20 +592,6 @@
         var d = await reportRes.json();
         reportContent.textContent = d.content || '';
         reportCard.style.display = 'block';
-        
-        // Append combined report with timestamp to Google Doc (when View Report)
-        try {
-          const sampleParam = useSample ? '?sample=1' : '';
-          const forceRes = await fetch(API + '/api/force-combined-report' + sampleParam, { method: 'POST' });
-          const forceData = await forceRes.json();
-          if (forceData.success) {
-            showMessage(`✅ Combined report appended to Google Doc (${forceData.themes_count || 0} themes, ${forceData.quotes_count || 0} quotes)`, 'success');
-          } else {
-            console.warn('Google Doc append failed:', forceData.message);
-          }
-        } catch (appendErr) {
-          console.warn('Google Doc append error:', appendErr);
-        }
       } catch (e) {
         showMessage(e.message || 'Failed to load report', 'error');
       } finally {

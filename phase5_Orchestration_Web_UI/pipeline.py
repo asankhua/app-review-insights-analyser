@@ -671,6 +671,21 @@ def append_combined_report_on_preview(
             source_links=source_links or None,
             last_checked=last_checked or None,
         )
+        text = payload.to_human_readable()
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        ts = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")
+        text_with_ts = f"--- Appended at {ts} IST ---\n\n{text}"
+
+        # Prefer production client (handles GOOGLE_DRIVE_CREDENTIALS_JSON, works on Render)
+        try:
+            from production_google_docs_client import append_to_google_doc_production
+            appended = append_to_google_doc_production(doc_id, text_with_ts)[0]
+            if appended:
+                return True, "Appended to Google Doc", payload
+        except Exception as prod_err:
+            logger.debug("Production client append failed, trying Phase 8: %s", prod_err)
+
         appended, mcp_msg = append_to_google_doc(payload, doc_id=doc_id, include_timestamp=True)
         msg = mcp_msg or ("Appended to Google Doc" if appended else "Append failed")
         return appended, msg, payload if appended else None

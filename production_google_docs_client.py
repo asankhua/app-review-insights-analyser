@@ -14,12 +14,22 @@ logger = logging.getLogger(__name__)
 def get_google_credentials() -> Optional[str]:
     """
     Get Google service account credentials for production deployment.
-    Supports both file-based and base64-encoded credentials.
+    Supports JSON string, base64-encoded, and file-based credentials.
     
     Returns:
         JSON string of service account credentials or None if not configured
     """
-    # Try base64 encoded credentials first (for production)
+    # Try JSON string (for Render env - GOOGLE_DRIVE_CREDENTIALS_JSON)
+    json_creds = os.environ.get("GOOGLE_DRIVE_CREDENTIALS_JSON", "").strip()
+    if json_creds:
+        try:
+            json.loads(json_creds)
+            logger.info("Using GOOGLE_DRIVE_CREDENTIALS_JSON")
+            return json_creds
+        except Exception as e:
+            logger.debug("Invalid GOOGLE_DRIVE_CREDENTIALS_JSON: %s", e)
+
+    # Try base64 encoded credentials (for production)
     base64_creds = os.environ.get("GOOGLE_SERVICE_ACCOUNT_BASE64", "").strip()
     if base64_creds:
         try:
@@ -32,15 +42,18 @@ def get_google_credentials() -> Optional[str]:
             logger.error(f"Failed to decode base64 credentials: {e}")
     
     # Try file-based credentials (for local development)
-    service_account_path = os.environ.get("MCP_GOOGLE_DOCS_SERVICE_ACCOUNT_PATH", "").strip()
-    if service_account_path and os.path.exists(service_account_path):
-        try:
-            with open(service_account_path, 'r', encoding='utf-8') as f:
-                file_creds = f.read()
-            logger.info(f"Using file-based service account credentials: {service_account_path}")
-            return file_creds
-        except Exception as e:
-            logger.error(f"Failed to read service account file: {e}")
+    for path_env in ("MCP_GOOGLE_DOCS_SERVICE_ACCOUNT_PATH", "GOOGLE_DRIVE_CREDENTIALS_PATH"):
+        service_account_path = os.environ.get(path_env, "").strip()
+        if service_account_path:
+            resolved = os.path.expanduser(service_account_path)
+            if os.path.exists(resolved):
+                try:
+                    with open(resolved, 'r', encoding='utf-8') as f:
+                        file_creds = f.read()
+                    logger.info(f"Using file-based service account credentials: {resolved}")
+                    return file_creds
+                except Exception as e:
+                    logger.error(f"Failed to read service account file: {e}")
     
     # Try alternative file path
     alt_path = "secrets/optimum-plexus-490703-p5-768ba7e7734c.json"
