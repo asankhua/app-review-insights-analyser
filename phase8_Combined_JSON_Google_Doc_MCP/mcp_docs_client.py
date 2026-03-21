@@ -304,7 +304,7 @@ def _append_via_docs_api(doc_id: str, text: str) -> bool:
     """
     try:
         # Import production client
-        from production_google_docs_client import get_google_credentials
+        from .production_google_docs_client import get_google_credentials
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
         

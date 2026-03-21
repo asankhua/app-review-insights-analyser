@@ -157,7 +157,7 @@ The codebase is organized into separate phases for better maintainability and mo
   2. **Preview Email** — HTML preview (respects "Use sample data" checkbox)
   3. **Send Email** — Send latest report via Resend (deployed) or SMTP (local); DOCX attachment
 - **Checkbox:** "Use sample data" — when checked, View Report and Preview use sample_data; else last synced (Gist/local)
-- **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Appended Doc (hyperlink to Google Doc)
+- **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Appended Doc (heading) with [Combined Report](https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0) as hyperlink
 - **Report preview** — Rendered markdown in a simple card
 - **No** Run Pipeline (pipeline runs via GitHub Actions scheduler only). **No** analytics, scheduling, or config UI (use CLI / .env)
 
@@ -196,7 +196,7 @@ The codebase is organized into separate phases for better maintainability and mo
 
 ### Phase 8: Combined JSON → Google Doc (MCP) (`phase8_Combined_JSON_Google_Doc_MCP/`)
 
-- **Purpose**: Build the combined JSON payload from the weekly pulse, fee scenario, and metadata, then append it to a Google Doc using MCP (Model Context Protocol).
+- **Purpose**: Build the combined JSON payload from the weekly pulse, fee scenario, and metadata, then append it to a Google Doc using MCP (Model Context Protocol) or Google Docs API fallback.
 - **Input**: Phase 3 output (weekly_pulse: themes, quotes, action_ideas from `pulse-*.md` or `weekly_pulse-*.json`), Phase 7 output (`fee_scenario`, `explanation_bullets`, `source_links`, `last_checked` — or empty/default if Phase 7 skipped), and report date.
 - **Combined JSON**: Assemble: `date`; `weekly_pulse.themes`, `weekly_pulse.quotes`, `weekly_pulse.action_ideas` (parsed from the pulse note or from grouped_reports + pulse content); `fee_scenario`, `explanation_bullets`, `source_links`, `last_checked` from the fee explanation step (or empty/default if skipped).
 - **MCP integration**: The pipeline invokes an MCP server/tool (e.g. Google Docs MCP) to append this combined JSON—or a human-readable rendering of it—to a configured Google Doc. The MCP client runs in the same process or as a configured subprocess; credentials (e.g. Google service account or Auth) are provided via environment or MCP server config.
@@ -204,6 +204,8 @@ The codebase is organized into separate phases for better maintainability and mo
 - **When skipped**: If **`GOOGLE_DOC_ID`** (or equivalent) is not set, or MCP is not configured, the append-to–Google-Doc step is skipped; pipeline still completes email and file outputs.
 - **Config**: Google Doc identifier (e.g. **`GOOGLE_DOC_ID`** or doc URL), MCP server URL or command if required, and any credentials required by the MCP tool for Google Docs write access.
 - **Output**: Google Doc (appended via MCP); optionally `data/reports/combined-YYYY-MM-DD.json` for audit.
+- **Preview Email flow**: Clicking Preview Email triggers `POST /api/force-combined-report`; the combined report is appended to the Google Doc; UI shows "Appending to Google Doc…" then "Combined report appended successfully"; result written to `data/logs/mcp_last.json` for status tracking.
+- **Key components**: `mcp_docs_client.py` (MCP + Docs API fallback), `production_google_docs_client.py` (credentials + Docs API), `combined_builder.py`, `docs/` (MCP verification notes).
 
 ### Benefits of Phase-wise Organization:
 
@@ -712,7 +714,7 @@ app-review-insights-analyser/
 │   ├── fee_formatter.py             # Build 3 explanation_bullets, source_links, last_checked
 │   └── models/
 │       └── fee.py                   # Fee scenario data models (config: FEE_EXPLANATION_URL in .env)
-├── phase8_Combined_JSON_Google_Doc_MCP/  # Phase 8: Combined JSON → Google Doc (MCP) (to implement)
+├── phase8_Combined_JSON_Google_Doc_MCP/  # Phase 8: Combined JSON → Google Doc (MCP, production_google_docs_client, docs)
 │   ├── __init__.py
 │   ├── combined_builder.py          # Build Combined JSON from Phase 3 + Phase 7
 │   ├── mcp_docs_client.py           # MCP client to append to Google Doc
@@ -1088,11 +1090,12 @@ Action 3: [Action description]
 |--------|----------|-------------|
 | `GET` | `/` | Web UI (HTML) |
 | `GET` | `/api/health` | Health check (no deps) |
-| `GET` | `/api/status` | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent, Fee, MCP) |
+| `GET` | `/api/status` | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent, Appended Doc) |
 | `GET` | `/api/report` | Latest weekly pulse (markdown; `?sample=1` for sample data) |
 | `GET` | `/api/email/preview` | Email preview HTML (`?sample=1` for sample data) |
 | `POST` | `/api/email/send` | Send latest report via Resend/SMTP (DOCX attached) |
 | `GET` | `/api/email/send-status` | Poll send result after `POST /api/email/send` |
+| `POST` | `/api/force-combined-report` | Append combined report to Google Doc (triggered by Preview Email; `?sample=1` for sample) |
 | `POST` | `/api/upload/sync` | Scheduler upload (report to backend; `X-Upload-Secret` required) |
 | `GET` | `/api/debug/fee` | Debug fee config (`fee_url_configured`, `fee_fetch_ok`, etc.) |
 

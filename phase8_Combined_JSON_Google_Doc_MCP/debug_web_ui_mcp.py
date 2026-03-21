@@ -6,7 +6,7 @@ import sys
 import os
 from pathlib import Path
 
-# Add project root to path
+# Add project root to path (phase8 is under project root)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 def debug_web_ui_mcp():

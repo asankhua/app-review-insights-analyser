@@ -58,12 +58,13 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 |--------|----------|-------------|
 | `GET` | `/` | Web UI (HTML) |
 | `GET` | `/api/health` | Health check |
-| `GET` | `/api/status` | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent, Fee, MCP) |
+| `GET` | `/api/status` | Pipeline status (reviews, themes, Scheduler Run, Last Email Sent, Appended Doc) |
 | `GET` | `/api/report` | Latest weekly pulse (markdown; `?sample=1` for sample data) |
 | `GET` | `/api/email/preview` | Email preview HTML |
 | `POST` | `/api/email/send` | Send latest report via Resend/SMTP (DOCX attached) |
 | `GET` | `/api/email/send-status` | Poll send result |
 | `POST` | `/api/upload/sync` | Scheduler upload (secured with `X-Upload-Secret`) |
+| `POST` | `/api/force-combined-report` | Append combined report to Google Doc (on Preview Email; `?sample=1` for sample) |
 | `GET` | `/api/debug/fee` | Debug fee config (no secrets) |
 
 ---
@@ -92,7 +93,7 @@ Transform Google Play Store reviews into actionable weekly insights — top them
 - **Web UI** — View report, preview email, send email
 - **Scheduler** — Weekly run at 9:00 AM IST (GitHub Actions)
 - **View Report** — From Gist (synced) or sample data (checkbox)
-- **Phase 8** — Combined JSON appended to Google Doc via MCP
+- **Phase 8** — Combined JSON appended to Google Doc via MCP (Preview Email triggers append)
 
 ---
 
@@ -144,7 +145,7 @@ app-review-insights-analyser/
 ├── phase5_Orchestration_Web_UI/    # FastAPI + pipeline + static UI
 ├── phase6_Scheduler/               # GitHub Actions (Phases 1–3)
 ├── phase7_Fee_Explanation/          # Exit load from FEE_EXPLANATION_URL
-├── phase8_Combined_JSON_Google_Doc_MCP/  # MCP → Google Doc
+├── phase8_Combined_JSON_Google_Doc_MCP/  # MCP → Google Doc (production_google_docs_client, docs)
 ├── frontend/                       # Vercel deploy (public/index.html)
 ├── src/                            # Shared config, models, services
 ├── docs/                           # DEPLOYMENT, LOCAL_RUN, MCP setup
@@ -180,7 +181,7 @@ Open **http://localhost:8000**
 1. **View Report** — Latest weekly pulse (from Gist or local). Check "Use sample data" for sample.
 2. **Preview Email** — HTML preview (respects sample checkbox).
 3. **Send Email** — Send report via Resend (deployed) or SMTP (local); DOCX attached.
-4. **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Appended Doc (hyperlink to Google Doc).
+4. **Status panel** — Reviews, Themes, Scheduler Run, Last Email Sent, Appended Doc (heading) with [Combined Report](https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0) as hyperlink.
 
 ---
 
@@ -197,7 +198,9 @@ Open **http://localhost:8000**
 
 ## Recent Changes
 
-- **Fee explainer** — Included in email body and DOCX; sanitized `FEE_EXPLANATION_URL` / `EXIT_LOAD_VALUE`; `EXIT_LOAD_VALUE` fallback when fetch blocked.
-- **Gist 401** — Token sanitization; retry without auth for public Gists.
+- **Preview Email + append** — Clicking Preview Email triggers `POST /api/force-combined-report`; combined report is appended to Google Doc; shows "Appending to Google Doc…" then "Combined report appended successfully".
+- **Appended Doc tile** — Status panel shows "Appended Doc" (heading) with "Combined Report" as static hyperlink to [Google Doc](https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0).
+- **MCP log stamping** — Append result written to `data/logs/mcp_last.json`; status cache invalidated after append.
+- **Phase 8 layout** — `production_google_docs_client.py`, `debug_web_ui_mcp.py`, MCP verification docs moved under `phase8_Combined_JSON_Google_Doc_MCP/`.
+- **Fee explainer** — Included in email body and DOCX; sanitized `FEE_EXPLANATION_URL` / `EXIT_LOAD_VALUE`.
 - **Debug endpoint** — `GET /api/debug/fee` to verify fee config on Render.
-- **UI status** — Fee (Configured / Not set) shown in status panel.
