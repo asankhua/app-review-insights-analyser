@@ -370,7 +370,6 @@
       </div>
       <div class="actions">
         <button class="btn-secondary" id="btnView" onclick="loadReport()">View Report</button>
-        <button class="btn-primary" id="btnForceAppend" onclick="forceCombinedReport()">Force Append to Doc</button>
       </div>
       <div id="actionMessage"></div>
 
@@ -593,6 +592,21 @@
         var d = await reportRes.json();
         reportContent.textContent = d.content || '';
         reportCard.style.display = 'block';
+        
+        // Automatically append combined report to Google Doc
+        try {
+          const forceRes = await fetch(API + '/api/force-combined-report', { method: 'POST' });
+          const forceData = await forceRes.json();
+          if (forceData.success) {
+            showMessage(`✅ Combined report appended to Google Doc (${forceData.themes_count} themes, ${forceData.quotes_count} quotes)`, 'success');
+          } else {
+            // Don't show error for Google Doc append failure, just log it
+            console.warn('Google Doc append failed:', forceData.message);
+          }
+        } catch (appendErr) {
+          // Don't show error for Google Doc append failure, just log it
+          console.warn('Google Doc append error:', appendErr);
+        }
       } catch (e) {
         showMessage(e.message || 'Failed to load report', 'error');
       } finally {
@@ -621,6 +635,21 @@
         iframe.srcdoc = d.html;
         document.getElementById('previewSubject').textContent = d.subject || 'Email Preview';
         document.getElementById('previewModal').style.display = 'flex';
+        
+        // Automatically append combined report to Google Doc
+        try {
+          const forceRes = await fetch(API + '/api/force-combined-report', { method: 'POST' });
+          const forceData = await forceRes.json();
+          if (forceData.success) {
+            showMessage(`✅ Combined report appended to Google Doc (${forceData.themes_count} themes, ${forceData.quotes_count} quotes)`, 'success');
+          } else {
+            // Don't show error for Google Doc append failure, just log it
+            console.warn('Google Doc append failed:', forceData.message);
+          }
+        } catch (appendErr) {
+          // Don't show error for Google Doc append failure, just log it
+          console.warn('Google Doc append error:', appendErr);
+        }
       } catch (e) {
         showMessage(e.message || 'Failed to load preview', 'error');
       } finally {
@@ -674,25 +703,6 @@
       } catch (e) {
         setLoading(false);
         showMessage(e.message || 'Email send failed', 'error');
-      }
-    }
-
-    async function forceCombinedReport() {
-      setLoading(true);
-      try {
-        const r = await fetch(API + '/api/force-combined-report', { method: 'POST' });
-        const d = await r.json();
-        if (d.success) {
-          showMessage(`✅ ${d.message} (${d.themes_count} themes, ${d.quotes_count} quotes)`, 'success');
-          // Open Google Doc in new tab
-          window.open(d.google_doc_url, '_blank');
-        } else {
-          showMessage(`❌ ${d.message}: ${d.error}`, 'error');
-        }
-      } catch (e) {
-        showMessage(e.message || 'Force append failed', 'error');
-      } finally {
-        setLoading(false);
       }
     }
 
