@@ -374,6 +374,7 @@
       </div>
       <div class="actions">
         <button class="btn-secondary" id="btnView" onclick="loadReport()">View Report</button>
+        <button class="btn-primary" id="btnForceAppend" onclick="forceCombinedReport()">Force Append to Doc</button>
       </div>
       <div id="actionMessage"></div>
 
@@ -688,6 +689,25 @@
       } catch (e) {
         setLoading(false);
         showMessage(e.message || 'Email send failed', 'error');
+      }
+    }
+
+    async function forceCombinedReport() {
+      setLoading(true);
+      try {
+        const r = await fetch(API + '/api/force-combined-report', { method: 'POST' });
+        const d = await r.json();
+        if (d.success) {
+          showMessage(`✅ ${d.message} (${d.themes_count} themes, ${d.quotes_count} quotes)`, 'success');
+          // Open Google Doc in new tab
+          window.open(d.google_doc_url, '_blank');
+        } else {
+          showMessage(`❌ ${d.message}: ${d.error}`, 'error');
+        }
+      } catch (e) {
+        showMessage(e.message || 'Force append failed', 'error');
+      } finally {
+        setLoading(false);
       }
     }
 

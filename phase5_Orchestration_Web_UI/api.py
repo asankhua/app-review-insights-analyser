@@ -36,11 +36,19 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+import json
+import logging
+from datetime import date
+from typing import Dict, Any
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # Lazy import pipeline so GET / and first paint never block on Gist/heavy code
 # app = FastAPI(...) and routes import pipeline only when needed
@@ -332,6 +340,72 @@ async def api_send_email(req: SendEmailRequest, background_tasks: BackgroundTask
         status_code=202,
         content={"message": "Email send started. Poll /api/email/send-status for result.", "pending": True},
     )
+
+
+@app.post("/api/force-combined-report")
+async def api_force_combined_report():
+    """Force append combined report to Google Doc - direct fix for production issues."""
+    try:
+        from datetime import date, datetime
+        from phase8_Combined_JSON_Google_Doc_MCP import run_phase8
+        from production_google_docs_client import append_to_google_doc_production
+        
+        # Get parameters
+        doc_id = os.environ.get("GOOGLE_DOC_ID", "18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0")
+        report_date = date.today()
+        
+        logger.info(f"Force appending combined report for {report_date} to {doc_id}")
+        
+        # Generate combined report
+        success, payload, mcp_message = run_phase8(
+            report_date=report_date,
+            fee_explanation=None,
+            save_to_reports=True,
+            doc_id=doc_id
+        )
+        
+        if success and payload:
+            # Generate human-readable report
+            report_text = payload.to_human_readable()
+            
+            # Add timestamp
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            report_text = f"\n--- FORCE APPEND - {timestamp} ---\n{report_text}"
+            
+            # Append to Google Doc
+            append_success, append_message = append_to_google_doc_production(doc_id, report_text)
+            
+            return JSONResponse(content={
+                "success": True,
+                "message": "Combined report force-appended successfully",
+                "report_date": report_date.strftime("%Y-%m-%d"),
+                "doc_id": doc_id,
+                "themes_count": len(payload.weekly_pulse.themes),
+                "quotes_count": len(payload.weekly_pulse.quotes),
+                "append_success": append_success,
+                "append_message": append_message,
+                "google_doc_url": f"https://docs.google.com/document/d/{doc_id}"
+            })
+        else:
+            return JSONResponse(content={
+                "success": False,
+                "message": "Failed to generate combined report",
+                "error": mcp_message or "Unknown error"
+            })
+            
+    except Exception as e:
+        logger.error(f"Force combined report failed: {e}")
+        return JSONResponse(content={
+            "success": False,
+            "message": "Force append failed",
+            "error": str(e)
+        })
+
+
+@app.get("/api/force-combined-report")
+async def api_force_combined_report_get():
+    """GET endpoint for easy testing."""
+    return await api_force_combined_report()
 
 
 if __name__ == "__main__":
