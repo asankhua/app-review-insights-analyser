@@ -356,8 +356,7 @@
           <span class="value" id="lastEmailSent">—</span>
         </div>
         <div class="status-item" id="appendStatusRow">
-          <label><a href="https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0" target="_blank" style="color: inherit; text-decoration: underline;">Appended Doc</a></label>
-          <span class="value" id="appendStatusMessage">—</span>
+          <label><a href="https://docs.google.com/document/d/18QNI1O7hYnT4U8VtO7bfuvIIiD819I2tMVL8D2jL7H0/edit?tab=t.0" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Combined Report</a></label>
         </div>
       </div>
     </div>
@@ -531,26 +530,6 @@
       lastRunEl.title = s.gist_unavailable ? 'Gist configured but unreachable. Check GH_GIST_TOKEN and REPORT_GIST_ID.' : '';
       document.getElementById('lastEmailSent').textContent = s.last_email_sent ? formatIST(s.last_email_sent) : 'Never';
       document.getElementById('appendStatusRow').style.display = 'block';
-      var appendStatusEl = document.getElementById('appendStatusMessage');
-      if (appendStatusEl) {
-        var statusText = s.append_status || '—';
-        var docLink = s.doc_link;
-        if (docLink && statusText !== '—') {
-          appendStatusEl.innerHTML = '<a href="' + docLink + '" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">' + escapeHtml(statusText) + '</a>';
-        } else if (docLink) {
-          appendStatusEl.innerHTML = '<a href="' + docLink + '" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Open Doc</a>';
-        } else {
-          appendStatusEl.textContent = statusText;
-        }
-      }
-      
-      // Force UI refresh to show latest status
-      setTimeout(() => {
-        if (appendStatusEl) {
-          appendStatusEl.style.display = 'block';
-          appendStatusEl.style.visibility = 'visible';
-        }
-      },100);
     }
 
     async function fetchWithRetry(url, retries) {
@@ -644,37 +623,20 @@
         
         // Append combined report with timestamp to Google Doc
         try {
+          showMessage('Appending to Google Doc…', 'info');
           const sampleParam = useSample ? '?sample=1' : '';
           const forceRes = await fetch(API + '/api/force-combined-report' + sampleParam, { method: 'POST' });
           const forceData = await forceRes.json();
           if (forceData.success) {
-            // Show append status with doc link
-            var statusText = forceData.append_status === 'success' ? 'SUCCESS' : 'FAILED';
-            var statusColor = forceData.append_status === 'success' ? 'success' : 'error';
-            var docLink = forceData.doc_link || '#';
-            
-            showMessage(`✅ Combined report appended to Google Doc (${forceData.themes_count || 0} themes, ${forceData.quotes_count || 0} quotes)`, 'success');
-            
-            // Update append status in UI
-            var appendStatusEl = document.getElementById('appendStatusMessage');
-            if (appendStatusEl) {
-              appendStatusEl.innerHTML = `<a href="${docLink}" target="_blank" style="color: inherit; text-decoration: underline;">${statusText}</a>`;
-              // Force refresh of the status display
-              appendStatusEl.style.display = 'block';
-            }
-            
-            // Optional: Show doc link in message
-            showMessage(`📄 <a href="${docLink}" target="_blank" style="color: inherit;">View Combined Report Doc</a>`, 'info');
+            showMessage('Combined report appended successfully', 'success');
+            fetchStatus();
           } else {
             console.warn('Google Doc append failed:', forceData.message);
-            var appendStatusEl = document.getElementById('appendStatusMessage');
-            if (appendStatusEl) {
-              appendStatusEl.innerHTML = `<a href="${forceData.doc_link || '#'}" target="_blank" style="color: inherit; text-decoration: underline;">FAILED</a>`;
-            }
-            showMessage(`❌ Failed to append: ${forceData.message}`, 'error');
+            showMessage('Failed to append: ' + (forceData.message || 'Unknown error'), 'error');
           }
         } catch (appendErr) {
           console.warn('Google Doc append error:', appendErr);
+          showMessage('Failed to append: ' + (appendErr.message || 'Network error'), 'error');
         }
       } catch (e) {
         showMessage(e.message || 'Failed to load preview', 'error');
