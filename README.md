@@ -1,4 +1,4 @@
-https://github.com/user-attachments/assets/3f503e21-58d6-4d36-be59-a09c2f3e3845
+https://github.com/user-attachments/assets/d6d6df55-a652-4959-901c-fde3129c9702
 
 # INDMoney Review Insights Analyzer
 Transform Google Play Store reviews into actionable weekly insights — top themes, user quotes, action ideas, and fee explainer — for product, growth, support, and leadership teams.
