@@ -1,6 +1,8 @@
-# App Review Insights Analyser
-## AI-Powered Product Intelligence from User Feedback
-**Author:** Ashish Kumar Sankhua | Product Manager  | **Date:** March 27, 2026 | **Status:** Production Ready
+# **App Review Insights Analyser**  
+*AI-Powered Product Intelligence from User Feedback*
+
+**Author:** Ashish Kumar Sankhua | Product Manager  
+**Date:** March 2026 | **Status:** Production Ready
 
 ---
 
@@ -153,10 +155,8 @@ User Reviews → AI Analysis → Themed Insights → Weekly Report → Google Do
 
 ## 8. User Interface & Dashboard
 
-### Web-Based Control Center
-
-**AI-Powered Review Intelligence Dashboard**
-Transforming complex data pipelines into intuitive product management workflows
+### **AI-Powered Review Intelligence Dashboard**  
+*Transforming Complex Data Pipelines into Intuitive Product Management Workflows*
 
 **Author:** Product Team | **Date:** March 2026 | **Status:** Production Ready
 
