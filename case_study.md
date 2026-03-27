@@ -1,4 +1,4 @@
-# **App Review Insights Analyser**  
+**App Review Insights Analyser**  
 *AI-Powered Product Intelligence from User Feedback*
 
 **Author:** Ashish Kumar Sankhua | Product Manager  
