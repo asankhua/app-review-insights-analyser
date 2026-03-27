@@ -1,6 +1,6 @@
 # App Review Insights Analyser
 ## AI-Powered Product Intelligence from User Feedback
-**Author:** [Your Name] | **Date:** March 27, 2026 | **Status:** Production Ready
+**Author:** Ashish Kumar Sankhua | Product Manager  | **Date:** March 27, 2026 | **Status:** Production Ready
 
 ---
 
