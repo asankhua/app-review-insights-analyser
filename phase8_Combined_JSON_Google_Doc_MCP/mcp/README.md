@@ -188,4 +188,3 @@ Tool(
 ## 📄 License
 
 This MCP server is part of the App Review Insights Analyzer project.
-

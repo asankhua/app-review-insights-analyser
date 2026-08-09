@@ -2,4 +2,3 @@
 from .fee import FeeExplanationResult
 
 __all__ = ["FeeExplanationResult"]
-

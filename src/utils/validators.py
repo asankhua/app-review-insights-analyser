@@ -157,4 +157,3 @@ class ReviewTransformer:
                 valid_reviews.append(review_record)
         
         return valid_reviews
-

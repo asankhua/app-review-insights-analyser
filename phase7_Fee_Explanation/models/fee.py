@@ -69,4 +69,3 @@ class FeeExplanationResult(BaseModel):
             <p><small>Last checked: {self.last_checked}</small></p>
         </div>
         """
-

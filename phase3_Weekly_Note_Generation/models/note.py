@@ -122,4 +122,3 @@ class NoteGenerationResponse(BaseModel):
     markdown_content: str
     text_content: str
     processing_time: float
-

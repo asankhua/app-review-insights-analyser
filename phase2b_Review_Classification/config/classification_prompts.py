@@ -38,4 +38,3 @@ Choose the single best matching theme. Return ONLY the JSON object, nothing else
 
 # System message for Groq
 REVIEW_CLASSIFICATION_SYSTEM_MESSAGE = """You are a product analyst specializing in mobile app review classification. Your task is to classify reviews into predefined themes and return them in a specific JSON format. Always ensure your output is valid JSON that can be parsed."""
-

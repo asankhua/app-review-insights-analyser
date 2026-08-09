@@ -82,4 +82,3 @@ def run_phase8(
     if mcp_message:
         _write_mcp_result(appended, mcp_message)
     return True, payload, mcp_message or ""
-

@@ -81,4 +81,3 @@ Action 3: [Action description] (Priority: Low)"""
 
 # System message for Gemini
 WEEKLY_NOTE_SYSTEM_MESSAGE = """You are a product insights analyst specializing in mobile app review analysis. Your task is to generate concise, actionable weekly review pulses that help product teams understand user feedback and prioritize improvements. Always ensure your output is professional, insightful, and follows the specified format exactly."""
-

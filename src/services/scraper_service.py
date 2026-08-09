@@ -137,4 +137,3 @@ class ScraperService:
         except Exception as e:
             logger.error(f"Error getting app details for {package_id}: {str(e)}")
             return {}
-

@@ -403,4 +403,3 @@ class EmailService:
         if not self.resend_api_key:
             info['connection_test'] = self.test_connection()
         return info
-

@@ -141,4 +141,3 @@ class TestCLICommands:
             timeout=10,
         )
         assert result.returncode == 0
-

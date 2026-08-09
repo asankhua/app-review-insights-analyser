@@ -7,4 +7,3 @@
     "vercel-build": "node build.js"
   }
 }
-

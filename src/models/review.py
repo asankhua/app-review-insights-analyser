@@ -60,4 +60,3 @@ class AppInfo(BaseModel):
     app_name: str
     lang: str = "en"
     country: str = "in"
-

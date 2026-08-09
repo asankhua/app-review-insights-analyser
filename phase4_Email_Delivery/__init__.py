@@ -20,4 +20,3 @@ __all__ = [
     'HTML_TEMPLATE',
     'PLAIN_TEXT_TEMPLATE'
 ]
-

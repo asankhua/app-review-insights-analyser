@@ -315,4 +315,3 @@ class WeeklyNoteService:
         end_of_week = start_of_week + timedelta(days=6)  # Sunday
         
         return start_of_week, end_of_week
-

@@ -346,4 +346,3 @@ def get_mcp_summary(hours: int = 24):
 def create_mcp_status_report():
     """Create MCP status report"""
     return mcp_status_logger.create_status_report()
-

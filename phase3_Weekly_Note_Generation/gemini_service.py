@@ -327,4 +327,3 @@ class GeminiService:
         end_of_week = start_of_week + timedelta(days=6)
         
         return f"{start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d')}"
-

@@ -104,4 +104,3 @@ class EmailStats(BaseModel):
     last_sent: Optional[datetime] = Field(None, description="Last email sent timestamp")
     success_rate: float = Field(default=0.0, description="Email delivery success rate")
     most_recent_file: Optional[str] = Field(None, description="Most recent delivery file")
-

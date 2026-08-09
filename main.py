@@ -615,4 +615,3 @@ def run_pipeline_sync(
 
 if __name__ == "__main__":
     main()
-

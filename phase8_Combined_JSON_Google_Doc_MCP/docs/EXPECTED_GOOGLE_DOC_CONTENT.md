@@ -64,4 +64,3 @@ When you click "Preview Email" and MCP works, the Google Doc should now contain:
 ---
 
 **🎉 The MCP status message should now be visible in your Google Doc!**
-

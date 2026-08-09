@@ -150,4 +150,3 @@ class GroqService:
             theme_models.append(theme)
         
         return theme_models
-
