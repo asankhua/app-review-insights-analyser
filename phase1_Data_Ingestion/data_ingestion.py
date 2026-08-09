@@ -194,3 +194,4 @@ class DataIngestionService:
         except Exception as e:
             logger.error(f"Error getting ingestion stats: {str(e)}")
             return {"error": str(e)}
+

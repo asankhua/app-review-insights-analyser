@@ -92,3 +92,4 @@ class CacheService:
             
         except Exception as e:
             logger.error(f"Error clearing cache: {str(e)}")
+

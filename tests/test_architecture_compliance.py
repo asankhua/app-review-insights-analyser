@@ -118,3 +118,4 @@ class TestArchitectureCompliance:
         for quote in data.get("report", {}).get("quotes", []):
             text = quote.get("text", "")
             assert not EMAIL_PATTERN.search(text), f"PII (email) found in quote: {text[:50]}..."
+

@@ -194,3 +194,4 @@ Open **http://localhost:8000**
 | [docs/MCP_GOOGLE_DOCS_SETUP.md](docs/MCP_GOOGLE_DOCS_SETUP.md) | Phase 8 MCP setup |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Phase details, design, API |
 
+

@@ -41,3 +41,4 @@ def debug_web_ui_mcp():
 
 if __name__ == "__main__":
     debug_web_ui_mcp()
+

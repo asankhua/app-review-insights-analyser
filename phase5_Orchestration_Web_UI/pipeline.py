@@ -739,3 +739,4 @@ def send_email(recipient: Optional[str] = None) -> dict:
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
+

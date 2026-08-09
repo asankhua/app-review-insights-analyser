@@ -233,3 +233,4 @@ class GroqService:
             logger.error(f"Failed to parse theme response: {str(e)}")
             logger.error(f"Raw content: {content}")
             raise
+

@@ -247,3 +247,4 @@ class ThemeDiscoveryService:
         except Exception as e:
             logger.error(f"Error getting themes stats: {str(e)}")
             return {"error": str(e)}
+

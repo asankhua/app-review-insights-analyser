@@ -537,3 +537,4 @@ class EmailDeliveryService:
         except Exception as e:
             logger.error(f"Error listing delivery files: {str(e)}")
             return []
+

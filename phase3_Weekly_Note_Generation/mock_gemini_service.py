@@ -246,3 +246,4 @@ Action 3: Redesign navigation to highlight mutual fund section prominently (Prio
             })
         
         return actions[:3]  # Return exactly 3 actions
+

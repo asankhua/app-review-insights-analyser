@@ -135,3 +135,4 @@ If you see an error, check:
 - Doc shared with the **service account `client_email`** from the JSON.
 - `MCP_GOOGLE_DOCS_SUBJECT_EMAIL` = the account that owns the Doc.
 - Google Docs API enabled for the project that owns the service account.
+

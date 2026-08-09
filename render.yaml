@@ -34,3 +34,4 @@ services:
         sync: false  # Phase 7: fund page URL for fee section in preview/email (e.g. https://www.indmoney.com/mutual-funds/...)
       - key: EXIT_LOAD_VALUE
         sync: false  # When fund page blocks fetch (403), use fallback (e.g. "1% if redeemed within 1 year")
+

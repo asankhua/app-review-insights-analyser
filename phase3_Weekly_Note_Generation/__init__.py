@@ -18,3 +18,4 @@ __all__ = [
     'QUOTE_SELECTION_PROMPT',
     'ACTION_IDEAS_PROMPT'
 ]
+

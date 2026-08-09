@@ -138,3 +138,4 @@ pytest tests/test_pipeline_integration.py -v -m integration
 - **Port 8000 in use:** Edit `run_web.py` and change `port=8000` to another port (e.g. `8001`).
 - **Integration test fails at “Running pipeline”:** Set `GEMINI_API_KEY` in `.env` so Phase 3 can generate the report.
 - **"Python-dotenv could not parse statement":** Use `KEY=value` in `.env` (no spaces around `=`). Use `GH_GIST_TOKEN=...` and `REPORT_GIST_ID=...` for Gist (not free-form lines).
+

@@ -435,3 +435,4 @@ def append_to_google_doc(
         return ok, "Google Doc: appended successfully." if ok else "Google Doc: append failed."
     except Exception as e:
         return False, f"Google Doc: {str(e)}"
+

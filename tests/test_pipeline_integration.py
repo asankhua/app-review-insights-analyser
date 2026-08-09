@@ -163,3 +163,4 @@ class TestPhase8CombinedJsonAndDoc:
         assert "Combined Report" in text
         assert "T1" in text
         assert "Mutual Fund Exit Load" in text
+

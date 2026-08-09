@@ -100,3 +100,4 @@ class Config:
     def get_reports_dir(cls) -> str:
         """Get reports directory"""
         return cls.REPORTS_DIR
+

@@ -247,3 +247,4 @@ def extract_fee_snippets(html: str, source_url: str) -> dict:
         "source_url": source_url,
         "raw_preview": text[:1500] if text else "",
     }
+

@@ -106,3 +106,4 @@ def get_fee_explanation(
             logger.debug("Could not write fee_explanation JSON: %s", e)
 
     return result
+

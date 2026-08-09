@@ -137,3 +137,4 @@ def _second_sentence(block: str) -> str:
                 return rest[: j + 1].strip()
             return rest[:200].strip() if rest else None
     return None
+

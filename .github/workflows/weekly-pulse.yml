@@ -56,3 +56,4 @@ jobs:
           REPORT_GIST_ID: ${{ secrets.REPORT_GIST_ID }}
           GH_GIST_TOKEN: ${{ secrets.GH_GIST_TOKEN }}
         run: python3 scripts/upload_sync.py
+

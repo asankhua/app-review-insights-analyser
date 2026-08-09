@@ -57,3 +57,4 @@ def auto_patch_mcp():
 
 # Apply the patch when this module is imported
 auto_patch_mcp()
+

@@ -30,3 +30,4 @@ Return ONLY the JSON array, nothing else."""
 
 # System message for Groq
 THEME_DISCOVERY_SYSTEM_MESSAGE = """You are a product analyst specializing in mobile app review analysis. Your task is to identify recurring themes from user reviews and return them in a specific JSON format. Always ensure your output is valid JSON that can be parsed."""
+

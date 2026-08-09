@@ -63,3 +63,4 @@ class CombinedReportPayload(BaseModel):
                 lines.append("Sources: " + ", ".join(self.source_links))
         lines.append("")
         return "\n".join(lines)
+

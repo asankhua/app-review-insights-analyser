@@ -37,3 +37,4 @@ if __name__ == "__main__":
         reload=True,
         loop="asyncio",  # Avoid uvloop segfaults on macOS
     )
+

@@ -204,3 +204,4 @@ def _format_block(block: str, section_title: str) -> str:
             items.append(f'<div class="theme-item">{line}</div>')
     body = '\n'.join(items)
     return f'<div class="section"><h2>{section_title}</h2>{body}</div>' if section_title else f'<div class="section">{body}</div>'
+
